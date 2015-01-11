@@ -14,9 +14,10 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
      * 
      * @class WinJSContrib.UI.DataSources.DataSourceManager
      * @classdesc helper class to manage an array with filter and grouping facilities and plug it into listview with or without semantic zoom. 
-     * This is a low level helper object, it's likely that relying on {@link WinJSContrib.UI.DataSources.SemanticListViews} will be easier.
+     * This is a low level helper object, it's likely that relying on {@link WinJSContrib.UI.SemanticListViews} will be easier.
      * @param {Object} options
      * @example
+     * {@lang javascript}
      * var datamgr = new WinJSContrib.UI.DataSources.DataSourceManager({
      *    defaultGroupLimit: 12,
      *    groupKind: WinJSContrib.UI.DataSources.Grouping.byField,
@@ -63,7 +64,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {number} defaultGroupLimit no grouping if items.length < defaultGroupLimit
+         * no grouping if items.length < defaultGroupLimit
+         * @field
+         * @type number
          */
         defaultGroupLimit: {
             get: function () {
@@ -75,7 +78,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {function} groupKind grouping manager function
+         * groupKind grouping manager function
+         * @field
+         * @type function
          */
         groupKind: {
             get: function () {
@@ -91,7 +96,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {WinJS.UI.ListView} listview items listview
+         * items listview
+         * @field
+         * @type WinJS.UI.ListView
          */
         listview: {
             get: function () {
@@ -107,7 +114,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {WinJS.UI.ListView} groupedList listview for grouped items 
+         * listview for grouped items
+         * @field
+         * @type WinJS.UI.ListView
          */
         groupedList: {
             get: function () {
@@ -119,7 +128,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {function} filter item filter callback
+         * item filter callback
+         * @field
+         * @type function
          */
         filter: {
             get: function () {
@@ -138,7 +149,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {Array} items data items
+         * data items
+         * @field
+         * @type Array
          */
         items: {
             get: function () {
@@ -322,7 +335,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {WinJS.UI.ListView} listview items listview
+         * items listview
+         * @field
+         * @type WinJS.UI.ListView 
          */
         listview: {
             get: function () {
@@ -331,7 +346,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {WinJS.UI.ListView} zoomedOutListview listview for zoomed out items (usually groups)
+         * listview for zoomed out items (usually groups)
+         * @field
+         * @type WinJS.UI.ListView 
          */
         zoomedOutListview: {
             get: function () {
@@ -340,7 +357,9 @@ WinJSContrib.UI.DataSources = WinJSContrib.UI.DataSources || {};
         },
 
         /**
-         * @property {WinJSContrib.UI.DataSources.DataSourceManager} dataManager datasource manager
+         * dataManager datasource manager
+         * @field
+         * @type WinJSContrib.UI.DataSources.DataSourceManager 
          */
         dataManager: {
             get: function () {

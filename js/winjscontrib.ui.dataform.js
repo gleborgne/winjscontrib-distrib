@@ -11,7 +11,8 @@
             /**
              * @class WinJSContrib.UI.DataForm
              * @classdesc
-             * This control enhance data form management by adding validation mecanism and form state helpers. It must be placed on a form element
+             * This control enhance data form management by adding validation mecanism and form state helpers. It must be placed on a form element.
+             * Input fields must use {@link WinJSContrib.UI.DataFormBinding} to bind object properties to input
              * @param {HTMLElement} element DOM element containing the control
              * @param {Object} options
              */
@@ -294,8 +295,10 @@
                         return val.toString();
                     },
                     fromInput: function (val) {
-                        if (typeof val !== "undefined" || val !== null)
+                        if (typeof val !== "undefined" && val !== null)
                             return parseFloat(val);
+
+                        return null;
                     }
                 },
                 /**
@@ -395,21 +398,22 @@
                 }
             }
 
-            dest.onchange = updateObjectFromInput;
+            function validateObjectOnBlur() {
+                if (fieldUpdated)
+                    dataform.validator.element(dest);
+            }
+
+            dest.addEventListener("change", updateObjectFromInput);
             if (dest.id) {
-                dest.onblur = function () {
-                    if (fieldUpdated)
-                        dataform.validator.element(dest);
-                }
+                dest.addEventListener("blur", validateObjectOnBlur);
             }
 
             if (!dest.winControl) {
                 dest.classList.add('win-disposable');
                 dest.winControl = {
                     dispose: function () {
-                        dest.onchange = null;
-                        dest.onblur = null;
-                        //dest.removeEventListener('change', updateObjectFromInput);
+                        dest.removeEventListener("change", updateObjectFromInput);
+                        dest.removeEventListener("blur", validateObjectOnBlur);
                     }
                 }
             }

@@ -7,6 +7,25 @@
 
 var WinJSContrib = WinJSContrib || {};
 
+
+/**
+ * definition for a field
+ * @typedef {Object} WinJSContrib.Search.FieldDefinition
+ * @property {number} weight weight of the item to rank search results
+ * @example
+ * { weight : 2}
+ */
+
+/**
+ * Definition of an index content
+ * @typedef {Object} WinJSContrib.Search.IndexDefinition
+ * @property {string} key name of the property considered as a key for the items
+ * @property {Object} fields object containing item's property path as name, and {@link WinJSContrib.Search.FieldDefinition} as value
+ * @example
+ * { key: 'id', fields: { "title": { weight : 5}, "description.detail": { weight : 2}}}
+ */
+
+
 /**
  * Small text search features based on objet indexing and text stemming. It's inspired by tools like Lucene.
  * For now indexes are stored with WinRT files, but it will soon be extended to support an extensible storage mecanism
@@ -17,16 +36,10 @@ WinJSContrib.Search = WinJSContrib.Search || {};
 (function () {
     "use strict";
 
-    /**
-     * @typedef {Object} WinJSContrib.Search.IndexDefinition
-     * @property {string} key name of the property considered as a key for the items
-     * @property {Object} fields object containing item's property path as name, and weight as value
-     * @example
-     * { key: 'id', fields: { "title": { weight : 5}, "description.detail": { weight : 2}}}
-     */
-
-    /**
+    /**     
      * path for search worker script file
+     * @field
+     * @type {string}
      */
     WinJSContrib.Search.workerPath = './scripts/winjscontrib/winjscontrib.search.worker.js';
 
@@ -34,8 +47,15 @@ WinJSContrib.Search = WinJSContrib.Search || {};
      * group of indexes
      * @class
      * @param {Object} definitions object containing definitions
+     * @example
+     * var idxgroup = new WinJSContrib.Search.IndexGroup({ peoples: { "firstname": { weight: 42 }} });
      */
     WinJSContrib.Search.IndexGroup = function (definitions) {
+        /**         
+         * object containing indexes, stored by name
+         * @field
+         * @type Object 
+         */
         this.indexes = {};
         if (definitions) {
             for (var n in definitions) {

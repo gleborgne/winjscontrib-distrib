@@ -5,8 +5,6 @@
 //This code is provided as is and we could not be responsible for what you are making with it
 //project is available at http://winjscontrib.codeplex.com
 
-
-
 (function () {
     "use strict";
 
@@ -44,10 +42,12 @@
              */
             function PageControlNavigator(element, options) {
                 var options = options || {};
+                var navigator = this;
                 this._element = element || document.createElement("div");
                 this._element.winControl = this;
                 this._element.mcnNavigator = true;
                 this._element.classList.add('mcn-navigator');
+                this._element.classList.add('mcn-navigation-ctrl');
                 this.eventTracker = new WinJSContrib.UI.EventTracker();
                 this.delay = options.delay || 0;
                 this.animationWaitForPreviousPageClose = options.animationWaitForPreviousPageClose || true;
@@ -85,7 +85,16 @@
                 else {
                     this.history = { backstack: [] };
                 }
-                this.eventTracker.addEvent(window, 'resize', this._resized.bind(this));
+
+                this.eventTracker.addEvent(window, 'resize', function (args) {
+                    if (navigator.resizeHandler)
+                        cancelAnimationFrame(navigator.resizeHandler);
+
+                    navigator.resizeHandler = requestAnimationFrame(function () {
+                        navigator.resizeHandler = null;
+                        navigator._resized(args);
+                    });
+                });
             },
             /**
              * @lends WinJSContrib.UI.PageControlNavigator.prototype
@@ -457,6 +466,7 @@
                         enterPage: navigator.animations.enterPage,
                         closeOldPagePromise: closeOldPagePromise,
                         onfragmentinit: function (control) {
+                            control.navigator = navigator;
                             control.element.mcnPage = true;
                             if (openStacked) {
                                 control.stackedOn = oldPage;
@@ -466,16 +476,17 @@
                             }
                         },
                         onafterlayout: function (control) {
-                           if (args.detail.state && args.detail.state.clearNavigationHistory) {
+                            if (args.detail.state && args.detail.state.clearNavigationHistory) {
                                 if (navigator.global) {
                                     WinJS.Navigation.history.backStack = [];
                                 } else {
                                     navigator.history.backstack = [];
                                 }
-                           }
-                           navigator._updateBackButton(control);
+                            }
+                            navigator._updateBackButton(control);
                         },
                         onafterready: function (control) {
+                            navigator.dispatchEvent('pageContentReady', { page: control });
                             if (WinJSContrib.UI.Application.progress)
                                 WinJSContrib.UI.Application.progress.hide();
                         }
@@ -494,7 +505,7 @@
                 _resized: function (args) {
                     if (this.pageControl && this.pageControl.element) {
                         var navigator = this;
-                        navigator.pageControl.element.opacity = '0';
+                        //navigator.pageControl.element.opacity = '0';
                         setImmediate(function () {
                             var vw = appView ? appView.value : null;
                             if (navigator.pageControl.updateLayout) {
@@ -508,7 +519,7 @@
                                         ctrl.updateLayout(ctrl.element, vw, navigator._lastViewstate);
                                 }
                             }
-                            WinJS.UI.Animation.fadeIn(navigator.pageControl.element);
+                            //WinJS.UI.Animation.fadeIn(navigator.pageControl.element);
                         });
                     }
                     this._lastViewstate = appView ? appView.value : null;
