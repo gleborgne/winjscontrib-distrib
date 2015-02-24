@@ -1,7 +1,8 @@
-//you may use this code freely as long as you keep the copyright notice and don't 
-// alter the file name and the namespaces
-//This code is provided as is and we could not be responsible for what you are making with it
-//project is available at http://winjscontrib.codeplex.com
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
 
 /// <reference path="//Microsoft.WinJS.2.0/js/base.js" />
 /// <reference path="//Microsoft.WinJS.2.0/js/ui.js" />
@@ -34,7 +35,7 @@
                     ctrl.tabContent.className = 'mcn-tabpages-content';
                     ctrl.element.appendChild(ctrl.tabContent);
                 }
-                ctrl.navigator = new WinJSContrib.UI.PageControlNavigator(ctrl.tabContent, { global: false, delay: 10 });
+                ctrl.navigator = new WinJSContrib.UI.PageControlNavigator(ctrl.tabContent, { global: false, delay: 10, disableHistory: true });
                 ctrl.navigator.animationWaitForPreviousPageClose = false;
                 ctrl.navigator.animations.exitPage = WinJSContrib.UI.Animation.tabExitPage;
                 ctrl.navigator.animations.enterPage = WinJSContrib.UI.Animation.tabEnterPage;
@@ -88,7 +89,7 @@
                     }
 
                     ctrl.swipeSlide = new WinJSContrib.UI.SwipeSlide(ctrl.tabContent);
-                    ctrl.navigator.animations.exitPage = function (elt) { return WinJSContrib.UI.Animation.fadeOut(elt, 100) };
+                    ctrl.navigator.animations.exitPage = function (elt) { return WinJSContrib.UI.Animation.fadeOut(elt, { duration: 100 }) };
 
                     ctrl.swipeSlide.onswipe = function (arg) {
                         var targetStyle = ctrl.swipeSlide.target.style;

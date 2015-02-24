@@ -1,3 +1,9 @@
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
+
 (function () {
     'use strict';
     WinJS.Namespace.define("WinJSContrib.UI", {
@@ -27,6 +33,7 @@
         {
             /**
              * attached flipview
+             * @type {Object}
              */
             flipView: {
                 get: function () {
@@ -131,6 +138,6 @@
                 WinJS.Utilities.disposeSubTree(this.element);
             }
         }),
-		WinJS.UI.DOMEventMixin)
+        WinJS.UI.DOMEventMixin)
     });
 })();

@@ -1,3 +1,9 @@
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
+
 (function () {
     'use strict';
     
@@ -27,7 +33,9 @@
                 this.messages = options.messages;
                 this.rules = options.rules;
                 /**
-                 * @member {Object} WinJSContrib.UI.DataForm#state
+                 * state of the form
+                 * @field
+                 * @type {Object}
                  */
                 this.state = new DataFormState();
                 this.state.item = {};
@@ -57,7 +65,7 @@
              */
         {
             /**
-             * @member
+             * @member {Array}
              */
             messages: {
                 get: function () {
@@ -68,7 +76,7 @@
                 }
             },
             /**
-             * @member
+             * @member {Array}
              */
             rules: {
                 get: function () {
@@ -79,7 +87,7 @@
                 }
             },
             /**
-             * @member
+             * @member {Array}
              */
             groups: {
                 get: function () {
@@ -91,7 +99,7 @@
             },
             /**
              * object bound to data form
-             * @member
+             * @member {Object}
              */
             item: {
                 get: function () {
@@ -215,7 +223,8 @@
                             $e.tooltipster('show');
                             $e[0].tooltipsterValidationTimeout = setTimeout(function () {
                                 $e[0].tooltipsterValidationTimeout = null;
-                                $e.tooltipster('hide');
+                                if ($e.hasClass('tooltipster'))
+                                    $e.tooltipster('hide');
                             }, dataform.tooltipDelay);
                         }
                     },
@@ -329,6 +338,17 @@
                     },
                     fromInput: function (val) {
                         return val;
+                    }
+                },
+                /**
+                 * @member
+                 */
+                "stringifiedObject": {
+                    fromObject: function (val) {
+                        return JSON.stringify(val);
+                    },
+                    fromInput: function (val) {
+                        return JSON.parse(val);
                     }
                 }
             }

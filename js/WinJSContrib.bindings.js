@@ -1,7 +1,8 @@
-//you may use this code freely as long as you keep the copyright notice and don't 
-// alter the file name and the namespaces
-//This code is provided as is and we could not be responsible for what you are making with it
-//project is available at http://winjscontrib.codeplex.com
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
 
 var WinJSContrib;
 (function (WinJSContrib) {
@@ -24,7 +25,16 @@ var WinJSContrib;
          * @param {string} argument name
          */
         WinJSContrib.Bindings.bindingArguments = function bindingArguments(elt, argname) {
-            var data = $(elt).data('win-bind-args');
+            var data;
+            if (WinJS.UI._optionsParser) {
+                var text = elt.getAttribute("data-win-bind-args");
+                if (text) {
+                    data = WinJS.UI._optionsParser(text);
+                }
+            } else {
+                data = $(elt).data('win-bind-args');
+            }
+
             if (data) {
                 if (argname) {
                     return data[argname];
@@ -32,7 +42,7 @@ var WinJSContrib;
                     return data;
                 }
             }
-        }
+        };
         var bindingArguments = WinJSContrib.Bindings.bindingArguments;
 
         /**
@@ -448,7 +458,7 @@ var WinJSContrib;
                     dispose: function () {
                         dest.removeEventListener('change', getVal);
                     }
-                }
+                };
             }
 
             var bindingDesc = {

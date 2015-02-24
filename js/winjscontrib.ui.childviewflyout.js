@@ -1,10 +1,10 @@
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
+
 /// <reference path="winjscontrib.core.js" />
-//you may use this code freely as long as you keep the copyright notice and don't 
-// alter the file name and the namespaces
-//This code is provided as is and we could not be responsible for what you are making with it
-//project is available at http://winjscontrib.codeplex.com
-
-
 
 (function () {
 
@@ -44,7 +44,7 @@
                }
                document.body.appendChild(this.rootElement);
                this.$element = $(element);
-               
+
                this.element.mcnChildnav = true;
 
                this.element.classList.add("mcn-childview");
@@ -263,22 +263,31 @@
                    var that = this;
                    $(that.rootElement).addClass("visible");
                    that.dispatchEvent('beforeshow');
-                   that.$overlay.addClass("visible");
-                   that.$contentPlaceholder.addClass("visible");
-
+                   that.$overlay.addClass("enter");
+                   that.$contentPlaceholder.addClass("enter");
                    return new WinJS.Promise(function (complete, error) {
-                       //setImmediate(function () {
-                       if (!that.isOpened) {
-                           that.show(true);
-                       }
-
                        setImmediate(function () {
-                           that.navigate(uri, options, skipHistory).done(function (e) {
-                               that.dispatchEvent('aftershow');
-                               complete(e);
-                           }, error);
+                       that.$overlay.addClass("visible");
+                       that.$contentPlaceholder.addClass("visible");
+
+                           //setImmediate(function () {
+                           if (!that.isOpened) {
+                               that.show(true);
+                           }
+
+                           setImmediate(function () {
+                               that.navigate(uri, options, skipHistory).done(function (e) {
+                                   that.dispatchEvent('aftershow');
+                                   complete(e);
+                               }, error);
+                           });
+
+                           that.$contentPlaceholder.afterTransition(function () {
+                               that.$overlay.removeClass("enter");
+                               that.$contentPlaceholder.removeClass("enter");
+                           });
+                           //});
                        });
-                       //});
                    });
                },
 
@@ -312,24 +321,26 @@
                            that.navEventsHandler();
                            that.navEventsHandler = null;
                        }
-                       //if (WinJSContrib.UI.Application && WinJSContrib.UI.Application.navigator)
-                       //    WinJSContrib.UI.Application.navigator.removeLock();
 
-                       //WinJS.Navigation.removeEventListener('beforenavigate', this.cancelNavigationBinded);
-                       //if (window.Windows && window.Windows.Phone)
-                       //    Windows.Phone.UI.Input.HardwareButtons.removeEventListener("backpressed", this.hardwareBackBtnPressedBinded);
-                       //else
-                       //    document.removeEventListener("backbutton", this.hardwareBackBtnPressedBinded);
+                       that.$overlay.removeClass("enter");
+                       that.$contentPlaceholder.removeClass("enter");
 
                        if (that.$overlay.hasClass("visible")) {
-                           that.$contentPlaceholder.afterTransition(function () {
-                               that.clear();
-                               $(that.rootElement).removeClass('visible');
-                               that.dispatchEvent('afterhide', arg);
-                           });
+                           that.$overlay.addClass("leave");
+                           that.$contentPlaceholder.addClass("leave");
+                           setImmediate(function () {
+                               that.$contentPlaceholder.afterTransition(function () {
+                                   that.clear();
+                                   $(that.rootElement).removeClass('visible');
+                                   that.dispatchEvent('afterhide', arg);
+                                   that.$overlay.removeClass("leave");
+                                   that.$contentPlaceholder.removeClass("leave");
+                               });
 
-                           that.$overlay.removeClass("visible");
-                           that.$contentPlaceholder.removeClass("visible");
+                               that.$overlay.removeClass("visible");
+                               that.$contentPlaceholder.removeClass("visible");
+
+                           });
                        }
                    }
                    return true;

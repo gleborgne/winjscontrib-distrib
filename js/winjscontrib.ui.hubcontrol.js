@@ -1,8 +1,10 @@
-//you may use this code freely as long as you keep the copyright notice and don't 
-// alter the file name and the namespaces
-//This code is provided as is and we could not be responsible for what you are making with it
-//project is available at http://winjscontrib.codeplex.com
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
 
+/// <reference path="../core/winjscontrib.core.js" />
 (function () {
     "use strict";
 
@@ -39,10 +41,22 @@
                 hub.hubScrolledBind = hub.hubScrolled.bind(hub);
                 hub.rendering = { lastScroll: 0 };
                 hub.identifier = hub.element.id + "//" + hub.element.className;
-                //setImmediate(function () {
-                //    hub.autoRegisterSections();
-                //    //hub.layout(Windows.UI.ViewManagement.ApplicationView.value);
-                //});
+
+                var parent = WinJSContrib.Utils.getScopeControl(hub.element);
+                if (parent.elementReady) {
+                      
+                    parent.elementReady.then(function () {
+                        if (!parent.beforeShow) parent.beforeShow = [];
+                        parent.beforeShow.push(function () {
+                            hub.layout();
+                        });
+                        return parent.renderComplete;
+                    }).then(function () {
+                        hub.prepare();
+                        return parent.readyComplete;
+                    });      
+                }
+
             },
             /**
              * @lends WinJSContrib.UI.HubControl.prototype
@@ -131,7 +145,7 @@
                             section.hub = hub;
                             section.renderItemsContent(forceRendering);
                         });
-                    }                    
+                    }
                 },
 
                 renderSection: function (section, sectionTemplate, hasTitle) {
@@ -269,11 +283,12 @@
             // Define the constructor function for the PageControlNavigator.
             function HubSection(element, options) {
                 var section = this;
+                options = options || {};
                 section.element = element || document.createElement('DIV');
                 section.element.winControl = section;
                 section.element.className = section.element.className + ' mcn-hub-section win-disposable';
-                section.items = [];
-                section.onlayout = undefined;
+                //section.items = [];
+                section.onlayout = options.onlayout;
             }, {
                 layout: function (viewState) {
                     var section = this;
@@ -289,14 +304,14 @@
                         }
                     }
 
-                    section.items = [];
-                    var allitems = section.element.querySelectorAll('.mcn-multipass-item');
-                    var numitems = allitems.length;
-                    for (var i = 0 ; i < numitems ; i++) {
-                        var itemCtrl = allitems[i].winControl;
-                        if (itemCtrl)
-                            section.items.push(itemCtrl);
-                    }
+                    //section.items = [];
+                    //var allitems = section.element.querySelectorAll('.mcn-multipass-item');
+                    //var numitems = allitems.length;
+                    //for (var i = 0 ; i < numitems ; i++) {
+                    //    var itemCtrl = allitems[i].winControl;
+                    //    if (itemCtrl)
+                    //        section.items.push(itemCtrl);
+                    //}
 
                     if (section.onlayout) {
                         section.onlayout(viewState);

@@ -1,7 +1,8 @@
-//you may use this code freely as long as you keep the copyright notice and don't 
-// alter the file name and the namespaces
-//This code is provided as is and we could not be responsible for what you are making with it
-//project is available at http://winjscontrib.codeplex.com
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
 
 var WinJSContrib = WinJSContrib || {};
 WinJSContrib.UI = WinJSContrib.UI || {};
@@ -227,7 +228,7 @@ WinJSContrib.UI = WinJSContrib.UI || {};
             if (!ctrl.rect && ctrl.items && ctrl.items.length) {
                 ctrl.rect = WinJSContrib.UI.offsetFrom(ctrl.element, ctrl.scrollContainer);
             } else {
-                ctrl.rect = ctrl.rect || {};
+                ctrl.rect = ctrl.rect || { x:0 , y:0 , width: 0, height: 0 };
                 ctrl.rect.width = ctrl.element.clientWidth;
                 ctrl.rect.height = ctrl.element.clientHeight;
             }

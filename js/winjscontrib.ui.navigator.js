@@ -1,9 +1,10 @@
-/// <reference path="WinJSContrib.core.js" />
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
 
-//you may use this code freely as long as you keep the copyright notice and don't 
-// alter the file name and the namespaces
-//This code is provided as is and we could not be responsible for what you are making with it
-//project is available at http://winjscontrib.codeplex.com
+/// <reference path="WinJSContrib.core.js" />
 
 (function () {
     "use strict";
@@ -50,6 +51,7 @@
                 this._element.classList.add('mcn-navigation-ctrl');
                 this.eventTracker = new WinJSContrib.UI.EventTracker();
                 this.delay = options.delay || 0;
+                this.disableHistory = options.disableHistory || false;
                 this.animationWaitForPreviousPageClose = options.animationWaitForPreviousPageClose || true;
                 this.animations = {};
                 this.locks = 0;
@@ -363,7 +365,7 @@
                         }
                     }
 
-                    if (!navigator.global && oldElement && oldElement.winControl && oldElement.winControl.navigationState && !args.skipHistory) {
+                    if (!navigator.global && !navigator.disableHistory && oldElement && oldElement.winControl && oldElement.winControl.navigationState && !args.skipHistory) {
                         navigator.history.backstack.push(oldElement.winControl.navigationState);
                     }
 
@@ -429,7 +431,7 @@
                         return;
                     }
                     else if (openStacked) {
-                        if (!navigator.global && oldElement && oldElement.winControl && oldElement.winControl.navigationState && !args.skipHistory) {
+                        if (!navigator.global && !navigator.disableHistory && oldElement && oldElement.winControl && oldElement.winControl.navigationState && !args.skipHistory) {
                             navigator.history.backstack.push(oldElement.winControl.navigationState);
                         }
                         var closeOldPagePromise = WinJS.Promise.wrap();
@@ -451,21 +453,26 @@
                     var layoutCtrls = [];
 
 
-                    if (navigator.animationWaitForPreviousPageClose) {
-                        var tempo = closeOldPagePromise.then(function () {
-                            return WinJS.Promise.timeout(navigator.delay);
-                        });
-                    } else {
-                        var tempo = WinJS.Promise.timeout(navigator.delay);
-                    }
+                    //if (navigator.animationWaitForPreviousPageClose) {
+                    //    var tempo = closeOldPagePromise.then(function () {
+                    //        return WinJS.Promise.timeout(navigator.delay);
+                    //    });
+                    //} else {
+                    //    var tempo = WinJS.Promise.timeout(navigator.delay);
+                    //}
 
                     navigator.currentPageDetails = args.detail;
 
-                    var openNewPagePromise = WinJSContrib.UI.renderFragment(pagecontainer, args.detail.location, args.detail.state, {
-                        delay: tempo,
+                    var openNewPagePromise = WinJSContrib.UI.Pages.renderFragment(pagecontainer, args.detail.location, args.detail.state, {
+                        //delay: tempo,
                         enterPage: navigator.animations.enterPage,
-                        closeOldPagePromise: closeOldPagePromise,
-                        onfragmentinit: function (control) {
+
+                        parented: parented.then(function () {
+                            return closeOldPagePromise;
+                        }),
+
+                        oninit: function (element, options) {
+                            var control = element.winControl;
                             control.navigator = navigator;
                             control.element.mcnPage = true;
                             if (openStacked) {
@@ -474,8 +481,12 @@
                                     oldPage.stackedBy = control;
                                 }
                             }
+                            control.renderComplete = control.renderComplete.then(function () {
+                                parentedComplete();
+                            });
                         },
-                        onafterlayout: function (control) {
+
+                        onrender: function (element, options) {
                             if (args.detail.state && args.detail.state.clearNavigationHistory) {
                                 if (navigator.global) {
                                     WinJS.Navigation.history.backStack = [];
@@ -483,10 +494,11 @@
                                     navigator.history.backstack = [];
                                 }
                             }
-                            navigator._updateBackButton(control);
+                            navigator._updateBackButton(element);
                         },
-                        onafterready: function (control) {
-                            navigator.dispatchEvent('pageContentReady', { page: control });
+
+                        onready: function (element, options) {
+                            navigator.dispatchEvent('pageContentReady', { page: element.winControl });
                             if (WinJSContrib.UI.Application.progress)
                                 WinJSContrib.UI.Application.progress.hide();
                         }
@@ -503,10 +515,12 @@
                 // Responds to resize events and call the updateLayout function
                 // on the currently loaded page.
                 _resized: function (args) {
+                    var navigator = this;
                     if (this.pageControl && this.pageControl.element) {
                         var navigator = this;
                         //navigator.pageControl.element.opacity = '0';
-                        setImmediate(function () {
+                        cancelAnimationFrame(navigator.layoutProcess);
+                        navigator.layoutProcess = requestAnimationFrame(function () {
                             var vw = appView ? appView.value : null;
                             if (navigator.pageControl.updateLayout) {
                                 navigator.pageControl.updateLayout.call(navigator.pageControl, navigator.pageElement, vw, navigator._lastViewstate);
@@ -531,9 +545,9 @@
 
                 // Updates the back button state. Called after navigation has
                 // completed.
-                _updateBackButton: function (control) {
+                _updateBackButton: function (element) {
                     var ctrl = this;
-                    var backButton = $(".win-backbutton", control.element);
+                    var backButton = $(".win-backbutton, .back-button, .win-navigation-backbutton", element);
                     //var backButton = this.pageElement.querySelector("header[role=banner] .win-backbutton");
 
                     if (backButton && backButton.length > 0) {
@@ -552,9 +566,9 @@
                         //    clearNav = args.detail.state.clearNavigationHistory;
 
                         if (ctrl.canGoBack && !clearNav) {
-                            backButton.removeAttr("disabled");
+                            backButton.removeClass('disabled').removeAttr("disabled");
                         } else {
-                            backButton.attr("disabled", "disabled");
+                            backButton.addClass('disabled').attr("disabled", "disabled");
                         }
                     }
                 }

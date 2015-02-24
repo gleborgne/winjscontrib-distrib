@@ -1,13 +1,14 @@
-//you may use this code freely as long as you keep the copyright notice and don't 
-// alter the file name and the namespaces
-//This code is provided as is and we could not be responsible for what you are making with it
-//project is available at http://winjscontrib.codeplex.com
+/* 
+ * WinJS Contrib v2.0.1.0
+ * licensed under MIT license (see http://opensource.org/licenses/MIT)
+ * sources available at https://github.com/gleborgne/winjscontrib
+ */
 
 (function () {
     'use strict';
 
     function debugLog(msg) {
-        console.log(msg);
+        //console.log(msg);
     }
 
     WinJS.Namespace.define("WinJSContrib.UI", {
@@ -29,6 +30,7 @@
             this.allowed = options.allowed || { left: true, right: true };
             this.disabled = false;
             WinJS.UI.setOptions(this, options);
+            this.thresholdFactor = this.thresholdFactor || 4;
         }, {
             //someProperty: {
             //    get: function () {
@@ -45,7 +47,7 @@
                     this.eventTracker.addEvent(this.element, 'pointerup', this._processUp.bind(this), true);
                     //this.eventTracker.addEvent(this.element, 'pointerleave', this._processUp.bind(this), true);
                     this.eventTracker.addEvent(this.element, 'pointermove', this._processMove.bind(this), true);
-                } else if (this.element.ontouchstart !== undefined) {
+                } else if (window.Touch) {
                     this.eventTracker.addEvent(this.element, 'touchstart', this._processDown.bind(this), true);
                     this.eventTracker.addEvent(this.element, 'touchend', this._processUp.bind(this), true);
                     this.eventTracker.addEvent(this.element, 'touchcancel', this._processUp.bind(this), true);
@@ -104,7 +106,9 @@
                         var dY = ctrl.ptDown.y - event.screenY;
                     }
 
-                    if (Math.abs(dX) > ctrl.element.clientWidth / 6) {
+                    if (Math.abs(dX) > (ctrl.element.clientWidth / ctrl.thresholdFactor)) {
+                        if (this.setMoveIntent)
+                            cancelAnimationFrame(this.setMoveIntent);
                         var arg = { dX: dX, dY: dY, move: (-dX - ctrl.threshold), screenMove: ctrl.ptDown.screenMove, direction: dX > 0 ? 'left' : 'right', handled: false };
                         ctrl.dispatchEvent('swipe', arg);
                         //setImmediate(function () {
@@ -123,13 +127,23 @@
                 ctrl.ptDown = null;
             },
 
+            _toSize: function (x) {
+                if (x !== 0)
+                    return x + 'px';
+                else
+                    return '0px';
+            },
+
             _cancelMove: function () {
+                var ctrl = this;
                 var target = this.target;
                 var x = 0, y = 0;
                 if (this.ptDown) {
                     x = this.ptDown.transformOffsetX;
                     y = this.ptDown.transformOffsetY;
                 }
+                if (this.setMoveIntent)
+                    cancelAnimationFrame(this.setMoveIntent);
 
                 debugLog('swipe slide, cancel move ' + x + '/' + y);
                 if (target) {
@@ -138,16 +152,14 @@
                         delay: 10,
                         duration: 400,
                         easing: 'ease-out',
-                        to: 'translate(' + x + 'px,' + y + 'px)'
-                    });
+                        to: 'translate3d(' + ctrl._toSize(x) + ', ' + ctrl._toSize(y) + ', 0px)'
+                    }).then(function () {
 
-                    //.then(function () {
-                    //    if (x === 0 && y === 0) {
-                    //        target.style.transform = '';
-                    //        if (target.style.hasOwnProperty('webkitTransform'))
-                    //            target.style.webkitTransform = '';
-                    //    }
-                    //});
+                        target.style.transform = 'translate3d(' + ctrl._toSize(x) + ', ' + ctrl._toSize(y) + ', 0px)';
+                        if (target.style.hasOwnProperty('webkitTransform'))
+                            target.style.webkitTransform = 'translate3d(' + ctrl._toSize(x) + ', ' + ctrl._toSize(y) + ', 0px)';
+
+                    });
                 }
             },
 
@@ -204,6 +216,8 @@
             },
 
             setMove: function (move, dX) {
+                var ctrl = this;
+
                 //debugLog('raw move ' + move);
                 if (dX > 0 && !this.allowed.right) {
                     move = Math.sqrt(move);
@@ -223,14 +237,20 @@
                     move = this.maxMoveBounds;
                 }
 
+                if (this.setMoveIntent)
+                    cancelAnimationFrame(this.setMoveIntent);
                 //debugLog('move ' + move);
-                if (this.ptDown) this.ptDown.screenMove = move;
-                debugLog('transform to ' + move);
-                if (this.target.style.webkitTransform !== undefined) {
-                    this.target.style.webkitTransform = 'translate(' + move + 'px, 0)';
-                } else {
-                    this.target.style.transform = 'translate(' + move + 'px, 0)';
-                }
+                if (ctrl.ptDown) ctrl.ptDown.screenMove = move;
+
+                this.setMoveIntent = requestAnimationFrame(function () {
+                    this.setMoveIntent = null;
+                    debugLog('transform to ' + move);
+                    if (ctrl.target.style.webkitTransform !== undefined) {
+                        ctrl.target.style.webkitTransform = 'translate3d(' + ctrl._toSize(move) + ', 0px, 0px)';
+                    } else {
+                        ctrl.target.style.transform = 'translate3d(' + ctrl._toSize(move) + ', 0px, 0px)';
+                    }
+                });
 
                 return move;
             },
