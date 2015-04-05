@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.1.0
+ * WinJS Contrib v2.0.3.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -164,8 +164,7 @@
                                 while (rendered.children[0]) {
                                     sectionElt.appendChild(rendered.children[0]);
                                 }
-                                //sectionItem.element.style.opacity = '0';
-                                //sectionItem.$element = $(sectionItem.element);
+
                                 hub.sectionsContainer.appendChild(sectionElt);
                                 hub.sections.push(sectionItem);
                                 complete(sectionItem);
@@ -249,7 +248,7 @@
                     //});
                 },
 
-                contentReady: function () {
+                pageReady: function () {
                     var hub = this;
                     hub.renderItemsContent();
                 },

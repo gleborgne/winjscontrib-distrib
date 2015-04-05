@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.1.0
+ * WinJS Contrib v2.0.3.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -257,10 +257,6 @@ var WinJSContrib;
                                 return that.process(element, options);
                             }).then(function Pages_processed() {
                                 return that.processed(element, options);
-                            }).then(function () {
-                                WinJSContrib.UI.bindMembers(element, that);
-                                WinJSContrib.UI.bindActions(element, that);
-                                return that;
                             });
                             var callComplete = function () {
                                 complete && complete(that);
@@ -280,7 +276,7 @@ var WinJSContrib;
                             });
                         }, _mixinBase);
                         base = _Base.Class.mix(base, WinJS.UI.DOMEventMixin);
-                        base.winJSContrib = true;
+                        //base.winJSContrib = true;
                         //this addition is for providing a way to inject behavior in all pages
                         _Pages.defaultPageMixins.forEach(function (mixin) {
                             var d = base.prototype.dispose;
@@ -293,6 +289,7 @@ var WinJSContrib;
                                 };
                             }
                         });
+                        WinJSContrib.UI.Pages.fragmentMixin(base);
                         viewMap[refUri] = base;
                     }
                     base = addMembers(base, members);

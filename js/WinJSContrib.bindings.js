@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.1.0
+ * WinJS Contrib v2.0.3.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -32,7 +32,7 @@ var WinJSContrib;
                     data = WinJS.UI._optionsParser(text);
                 }
             } else {
-                data = $(elt).data('win-bind-args');
+                data = elt.dataset.winBindArgs;
             }
 
             if (data) {
@@ -107,8 +107,8 @@ var WinJSContrib;
          * <div data-foo="42" data-win-bind="foo : myproperty WinJSContrib.Bindings.dataAttr"></div>
          */
         WinJSContrib.Bindings.dataAttr = WinJS.Binding.initializer(function dataAttrBinding(source, sourceProperty, dest, destProperty) {
-            var data = WinJSContrib.Utils.readProperty(source, sourceProperty);
-            $(dest).attr('data-' + destProperty, data).data(destProperty, data);
+        	var data = WinJSContrib.Utils.readProperty(source, sourceProperty);
+        	dest.setAttribute('data-' + destProperty, data)
         });
 
         /**
@@ -149,8 +149,8 @@ var WinJSContrib;
         WinJSContrib.Bindings.asClass = WinJS.Binding.initializer(function asClassBinding(source, sourceProperty, dest, destProperty) {
             function setClass(newval, oldval) {
                 var data = WinJSContrib.Utils.readProperty(source, sourceProperty);
-                $(dest).removeClass(destProperty + '-' + oldval);
-                $(dest).addClass(destProperty + '-' + data);
+                dest.classList.remove(destProperty + '-' + oldval);
+                dest.classList.add(destProperty + '-' + data);
             }
             var bindingDesc = {};
             bindingDesc[sourceProperty] = setClass;
@@ -213,7 +213,7 @@ var WinJSContrib;
                     data = Bindings.pictureUnavailable;
                 }
 
-                $(dest).removeClass('imageLoaded');
+                dest.classList.remove('imageLoaded');
                 setTimeout(function () {
                     WinJSContrib.UI.loadImage(data).done(function () {
                         _setPic(dest, data);

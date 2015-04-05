@@ -1,12 +1,12 @@
 /* 
- * WinJS Contrib v2.0.1.0
+ * WinJS Contrib v2.0.3.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
 
 //data container based on winrt files
 
-(function () {
+(function (global) {
     'use strict';
 
     WinJS.Namespace.define("WinJSContrib.DataContainer", {
@@ -16,7 +16,14 @@
             container.options = options || {};
             container.parent = parent;
             container.folderPromise;
-            if (!window.Windows)
+            container.useDataCache = options.useDataCache || false;
+            container.dataCache = null;
+            if (container.useDataCache) {
+                container.dataCache = {};
+            }
+            container.childs = {};
+
+            if (!global.Windows)
                 throw "WinRT is required !";
 
             if (!key) {
@@ -35,14 +42,30 @@
         }, {
             read: function (itemkey) {
                 var container = this;
+                if (container.useDataCache) {
+                    var data = container.dataCache[itemkey];
+                    if (data) {
+                        //clone object to avoid unintended object alteration
+                        var clone = JSON.parse(JSON.stringify(data));
+                        return WinJS.Promise.wrap(clone);
+                    }
+                }
 
                 return container.folderPromise.then(function (folder) {
-                    return readFileAsync(folder, itemkey, container.options.encrypted, Windows.Storage.CreationCollisionOption.openIfExists, 0, container.options.logger);
+                    return readFileAsync(folder, itemkey, container.options.encrypted, Windows.Storage.CreationCollisionOption.openIfExists, 0, container.options.logger).then(function (data) {
+                        if (container.useDataCache) {
+                            container.dataCache[itemkey] = data;
+                        }
+                        return data;
+                    });
                 });
             },
 
             save: function (itemkey, obj) {
                 var container = this;
+                if (container.useDataCache) {
+                    container.dataCache[itemkey] = obj;
+                }
 
                 return container.folderPromise.then(function (folder) {
                     return writeFileAsync(folder, itemkey, obj, container.options.encrypted, Windows.Storage.CreationCollisionOption.replaceExisting, 0, container.options.logger);
@@ -67,12 +90,45 @@
             },
 
             child: function (key) {
-                if (this[key])
-                    return this[key];
+                if (this.childs[key])
+                    return this.childs[key];
 
                 var res = new WinJSContrib.DataContainer.WinRTFilesContainer(key, this.options, this);
-                this[key] = res;
+                this.childs[key] = res;
                 return res;
+            },
+
+            clearAllCache: function () {
+                var container = this;
+                container.clearCache();
+                container.clearDataCache();
+            },
+
+            clearCache: function () {
+                var container = this;
+                container.childs = {};
+
+                for (var k in container.childs) {
+                    if (container.childs.hasOwnProperty(k)) {
+                        container.childs[k].clearCache();
+                    }
+                }
+            },
+
+            clearDataCache: function () {
+                var container = this;
+
+                if (container.useDataCache) {
+                    container.dataCache = {};
+                } else {
+                    container.dataCache = null;
+                }
+
+                for (var k in container.childs) {
+                    if (container.childs.hasOwnProperty(k)) {
+                        container.childs[k].clearDataCache();
+                    }
+                }
             }
         })
     });
@@ -115,9 +171,9 @@
             if (unprotectedData) {
                 var rawText = Windows.Security.Cryptography.CryptographicBuffer.convertBinaryToString(Windows.Security.Cryptography.BinaryStringEncoding.utf8, unprotectedData);
                 if (rawText) {
-                    try{
+                    try {
                         obj = JSON.parse(rawText);
-                    }catch(exception){}
+                    } catch (exception) { }
                 }
             }
 
@@ -135,9 +191,11 @@
             folder.getFileAsync(filename).then(function (file) {
                 return getFileContentAsJSONAsync(file, encrypted);
             }).then(function (res) {
+                if (logger) logger.debug("read " + folder.path + '\\' + toJSONFileName(fileName));
                 readComplete(res);
             }, function (err) {
                 if (err.number == -2147024894) {
+                    if (logger) logger.debug("read empty " + folder.path + '\\' + toJSONFileName(fileName));
                     readComplete();
                     return;
                 }
@@ -193,4 +251,4 @@
         });
     }
 
-})();
+})(this);

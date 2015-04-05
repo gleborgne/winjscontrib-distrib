@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.1.0
+ * WinJS Contrib v2.0.3.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -67,7 +67,7 @@ WinJSContrib.CrossPlatform = WinJSContrib.Cross || {};
          * Check if Windows
          */
         Windows: function () {
-            return navigator.userAgent.match(/IEMobile/i);
+            return navigator.userAgent.match(/IEMobile/i) || window.Windows !== undefined;
         },
         any: function () {
             return (isMobile.Android() || isMobile.BlackBerry() || isMobile.iOS() || isMobile.Opera() || isMobile.Windows());

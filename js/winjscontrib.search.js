@@ -1,11 +1,14 @@
 /* 
- * WinJS Contrib v2.0.1.0
+ * WinJS Contrib v2.0.3.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
 
 var WinJSContrib = WinJSContrib || {};
-
+/*
+ look at http://burakkanber.com/blog/machine-learning-full-text-search-in-javascript-relevance-scoring/
+ */
+ 
 /**
  * definition for a field
  * @typedef {Object} WinJSContrib.Search.FieldDefinition
