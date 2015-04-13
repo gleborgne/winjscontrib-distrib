@@ -7,6 +7,17 @@
 ///<reference path="../typings/jquery.d.ts"/>
 ///<reference path="../typings/winjs.d.ts"/>
 ///<reference path="../typings/winrt.d.ts"/>
+//polyfill setimmediate
+if (!this.setImmediate) {
+    this.setImmediate = function (callback) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        setTimeout(callback, 0);
+        return 0;
+    };
+}
 var WinJSContrib;
 (function (WinJSContrib) {
     var UI;
@@ -1037,9 +1048,35 @@ var WinJSContrib;
             }
             else if (window.Touch && !opt.noWebkitTouch) {
                 element.mcnTapTracking.pointerModel = 'touch';
-                element.mcnTapTracking.eventTracker.addEvent(element, 'touchstart', ptDown);
-                element.mcnTapTracking.eventTracker.addEvent(element, 'touchcancel', ptOut);
-                element.mcnTapTracking.eventTracker.addEvent(element, 'touchend', ptUp);
+                element.mcnTapTracking.eventTracker.addEvent(element, 'touchstart', function (arg) {
+                    element.mcnTapTracking.cancelMouse = true;
+                    ptDown(arg);
+                });
+                element.mcnTapTracking.eventTracker.addEvent(element, 'touchcancel', function (arg) {
+                    setTimeout(function () {
+                        element.mcnTapTracking.cancelMouse = false;
+                    }, 1000);
+                    ptOut(arg);
+                });
+                element.mcnTapTracking.eventTracker.addEvent(element, 'touchend', function (arg) {
+                    setTimeout(function () {
+                        element.mcnTapTracking.cancelMouse = false;
+                    }, 1000);
+                    ptUp(arg);
+                });
+                element.mcnTapTracking.eventTracker.addEvent(element, 'mousedown', function (arg) {
+                    if (!element.mcnTapTracking.cancelMouse)
+                        ptDown(arg);
+                });
+                element.mcnTapTracking.eventTracker.addEvent(element, 'mouseleave', function (arg) {
+                    ptOut(arg);
+                });
+                element.mcnTapTracking.eventTracker.addEvent(element, 'mouseup', function (arg) {
+                    if (!element.mcnTapTracking.cancelMouse)
+                        ptUp(arg);
+                    else
+                        ptOut(arg);
+                });
             }
             else {
                 element.mcnTapTracking.pointerModel = 'mouse';
@@ -2020,6 +2057,11 @@ var WinJSContrib;
                 method = WinJSContrib.Utils.readProperty(control, methodName);
                 if (method && typeof method === 'function')
                     method = method.bind(control);
+            }
+            else if (text.indexOf('select:') === 0) {
+                methodName = text.substr(7);
+                control = WinJSContrib.Utils.getScopeControl(element);
+                method = control.querySelector(methodName);
             }
             else {
                 methodName = text;
