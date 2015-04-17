@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.3.0
+ * WinJS Contrib v2.1.0.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -223,7 +223,7 @@ WinJSContrib.Alerts = WinJSContrib.Alerts || {};
      * @param {Object} data toast options
      */
     WinJSContrib.Alerts.toastNotification = function (data) {
-        if (window.Windows) {
+        if (Windows) {
             var notifications = Windows.UI.Notifications;
             var template = data.template || (data.picture ? notifications.ToastTemplateType.toastImageAndText01 : notifications.ToastTemplateType.toastText01);
             //var template = notifications.ToastTemplateType[data.template]; //toastImageAndText01;

@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.3.0
+ * WinJS Contrib v2.1.0.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -43,7 +43,10 @@
            		this.element.style.display = 'none';
            	}
            	document.body.appendChild(this.rootElement);
-           	
+
+           	//tell if internal navigator must register for navigation events
+           	this.navigationEvents = options.navigationEvents;
+
            	this.element.mcnChildnav = true;
 
            	this.element.classList.add("mcn-childview");
@@ -71,10 +74,10 @@
 
            		that.contentPlaceholder = new FD('DIV', "childNavigator-contentPlaceholder", that.rootElement)
 					.append('DIV', null, function (nav) {
-           				that.navigator = new WinJSContrib.UI.PageControlNavigator(nav.element, { global: false });
-           				that.navigator.hide = function (arg) {
-           					return that.hide(arg);
-           				}
+						that.navigator = new WinJSContrib.UI.PageControlNavigator(nav.element, { global: false });
+						that.navigator.hide = function (arg) {
+							return that.hide(arg);
+						}
 					})
 					.element;
            	},
@@ -155,13 +158,18 @@
 
            	hardwareBackBtnPressed: function (arg) {
            		var ctrl = this;
-           		var idx = WinJSContrib.UI.FlyoutPage.openPages.indexOf(ctrl);
-           		if (idx == WinJSContrib.UI.FlyoutPage.openPages.length - 1) {
+           		if (!ctrl.navigator._checkBackNavigation(arg)) {           			
            			ctrl.hide();
            			arg.handled = true;
-           			if (arg.preventDefault)
-           				arg.preventDefault();
            		}
+
+           		//var idx = WinJSContrib.UI.FlyoutPage.openPages.indexOf(ctrl);
+           		//if (idx == WinJSContrib.UI.FlyoutPage.openPages.length - 1) {
+           		//	ctrl.hide();
+           		//	arg.handled = true;
+           		//	if (arg.preventDefault)
+           		//		arg.preventDefault();
+           		//}
            	},
 
            	//cancelNavigation: function (args) {
@@ -186,6 +194,9 @@
            				that.contentPlaceholder.classList.add("visible");
 
            			that.navEventsHandler = WinJSContrib.UI.registerNavigationEvents(that, this.hardwareBackBtnPressedBinded);
+           			if (that.navigationEvents) {
+           				that.navigator.addNavigationEvents();
+           			}
            			//WinJS.Navigation.addEventListener('beforenavigate', this.cancelNavigationBinded);
            			//if (window.Windows && window.Windows.Phone)
            			//    Windows.Phone.UI.Input.HardwareButtons.addEventListener("backpressed", this.hardwareBackBtnPressedBinded);
@@ -311,6 +322,7 @@
 
            			if (that.navEventsHandler) {
            				that.navEventsHandler();
+           				that.navigator.removeNavigationEvents();
            				that.navEventsHandler = null;
            			}
 

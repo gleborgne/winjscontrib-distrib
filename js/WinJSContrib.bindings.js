@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.3.0
+ * WinJS Contrib v2.1.0.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -29,7 +29,7 @@ var WinJSContrib;
             if (WinJS.UI._optionsParser) {
                 var text = elt.getAttribute("data-win-bind-args");
                 if (text) {
-                    data = WinJS.UI._optionsParser(text);
+                    data = WinJS.UI.optionsParser(text, window);
                 }
             } else {
                 data = elt.dataset.winBindArgs;

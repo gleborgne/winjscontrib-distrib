@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.3.0
+ * WinJS Contrib v2.1.0.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -359,4 +359,4 @@ var WinJSContrib;
     WinJSContrib.Logger = defaultLogger;
 })();
 
-//# sourceMappingURL=../../Sources/Core/winjscontrib.logger.js.map
+//# sourceMappingURL=../../Sources/Common/winjscontrib.logger.js.map

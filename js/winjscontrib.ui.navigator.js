@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.3.0
+ * WinJS Contrib v2.1.0.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -85,7 +85,10 @@
             		this.eventTracker.addEvent(nav, 'navigated', this._navigated.bind(this));
             	}
             	else {
-            		this.history = { backstack: [] };
+            		if (options.navigationEvents) {
+            			this.addNavigationEvents();
+            		}
+            		this._history = { backstack: [] };
             	}
 
             	this.eventTracker.addEvent(window, 'resize', function (args) {
@@ -122,6 +125,15 @@
             		}
             	},
 
+            	history : {
+            		get: function(){
+            			if (this.global)
+            				return WinJS.Navigation.history;
+            			else
+            				return this._history;
+            		}
+            	},
+
             	addLock: function () {
             		this.locks++;
             	},
@@ -147,10 +159,66 @@
             		}
 
             		this._disposed = true;
+            		this.removeNavigationEvents();
             		if (WinJS.Utilities.disposeSubTree)
             			WinJS.Utilities.disposeSubTree(this._element);
 
             		this.eventTracker.dispose();
+            	},
+
+				//check back navigation in the context of navigation events.
+            	_checkBackNavigation: function (arg) {
+            		var navigator = this;
+            		var currentPage = navigator.pageControl;
+            		var confirm = function () {
+            			arg.handled = true;
+            			if (arg.preventDefault)
+            				arg.preventDefault();
+            		}
+            		var check = function () {
+            			if (navigator.canGoBack) {
+            				navigator.back();
+            				confirm();
+            				return true;
+            			};
+            		}
+
+            		if (currentPage.canClose) {
+            			var res = currentPage.canClose();
+            			if (WinJS.Promise.is(res)) {
+            				res.then(function (canClose) {
+            					if (!canClose) {
+            						confirm();
+            						return true;
+            					}
+            					return check();
+            				});
+            			} else {
+            				if (!res) {
+            					confirm();
+            					return true;
+            				}
+            				return check();
+            			}
+
+            		} else {
+            			return check();
+            		}
+            	},
+
+				//register hardware backbutton. unecessary if navigator is global
+            	addNavigationEvents: function () {
+            		var navigator = this;
+            		this.navigationEvents = WinJSContrib.UI.registerNavigationEvents(this, function (arg) {
+            			navigator._checkBackNavigation(arg);
+            		});
+            	},
+
+            	removeNavigationEvents: function(){
+            		if (this.navigationEvents){
+            			this.navigationEvents();
+            			this.navigationEvents = null;
+            		}
             	},
 
             	// Retrieves a list of animation elements for the current page.
@@ -165,19 +233,25 @@
             	// Navigates back whenever the backspace key is pressed and
             	// not captured by an input field.
             	_keypressHandler: function (args) {
+            		if (this.locks > 0)
+            			return;
+
             		if (args.key === "Backspace") {
-            			nav.back();
+            			this.back();
             		}
             	},
 
             	// Navigates back or forward when alt + left or alt + right
             	// key combinations are pressed.
             	_keyupHandler: function (args) {
+            		if (this.locks > 0)
+            			return;
+
             		if ((args.key === "Left" && args.altKey) || (args.key === "BrowserBack")) {
-            			nav.back();
-            		} else if ((args.key === "Right" && args.altKey) || (args.key === "BrowserForward")) {
+            			this.back();
+            		}/* else if ((args.key === "Right" && args.altKey) || (args.key === "BrowserForward")) {
             			nav.forward();
-            		}
+            		}*/
             	},
 
             	// This function responds to clicks to enable navigation using
@@ -207,9 +281,10 @@
             			};
             			nav._beforeNavigate(arg);
             			arg.detail.pagePromise = arg.detail.pagePromise || WinJS.Promise.wrap();
+            			nav._history.current = { state: initialState, location: location };
             			return arg.detail.pagePromise.then(function () {
             				if (isback) {
-            					nav.history.backstack.splice(nav.history.backstack.length - 1, 1);
+            					nav._history.backstack.splice(nav._history.backstack.length - 1, 1);
             				}
             				nav._navigated(arg);
             				return arg.detail.pagePromise;
@@ -221,7 +296,8 @@
             		if (this.global) {
             			WinJS.Navigation.history.backStack = [];
             		} else {
-            			this.history.backstack = [];
+            			this._history.backstack = [];
+            			this._history.current = null;
             		}
             	},
 
@@ -247,7 +323,7 @@
             			if (this.global)
             				return nav.canGoBack;
             			else
-            				return this.history.backstack.length > 0;
+            				return this._history.backstack.length > 0;
             		}
             	},
 
@@ -257,9 +333,9 @@
             			return WinJS.Navigation.back(distance);
             		}
             		else {
-            			if (navigator.history.backstack.length) {
-            				var pageindex = navigator.history.backstack.length - 1;
-            				var previousPage = navigator.history.backstack[pageindex];
+            			if (navigator._history.backstack.length) {
+            				var pageindex = navigator._history.backstack.length - 1;
+            				var previousPage = navigator._history.backstack[pageindex];
 
             				return navigator.navigate(previousPage.location, previousPage.state, true, true);
             			}
@@ -359,6 +435,7 @@
             		navigator.dispatchEvent('closingPage', { page: oldElement });
 
             		if (oldElement && oldElement.winControl) {
+            			oldElement.winControl.pageLifeCycle.stop();
             			oldElement.winControl.dispatchEvent('closing', { youpla: 'boom' });
 
             			if (oldElement.winControl.cancelPromises) {
@@ -367,7 +444,7 @@
             		}
 
             		if (!navigator.global && !navigator.disableHistory && oldElement && oldElement.winControl && oldElement.winControl.navigationState && !args.skipHistory) {
-            			navigator.history.backstack.push(oldElement.winControl.navigationState);
+            			navigator._history.backstack.push(oldElement.winControl.navigationState);
             		}
 
             		navigator._pageElement = null;
@@ -433,7 +510,7 @@
             		}
             		else if (openStacked) {
             			if (!navigator.global && !navigator.disableHistory && oldElement && oldElement.winControl && oldElement.winControl.navigationState && !args.skipHistory) {
-            				navigator.history.backstack.push(oldElement.winControl.navigationState);
+            				navigator._history.backstack.push(oldElement.winControl.navigationState);
             			}
             			var closeOldPagePromise = WinJS.Promise.wrap();
             		}
@@ -468,11 +545,14 @@
             			//delay: tempo,
             			enterPage: navigator.animations.enterPage,
 
-            			parented: closeOldPagePromise.then(function () {
-            				return parented;
-            			}),
+            			//parented: closeOldPagePromise.then(function () {
+            			//	return parented;
+            			//}),
+
+            			closeOldPagePromise: closeOldPagePromise.then(function () { }, function () { }),
 
             			oninit: function (element, options) {
+            				if (!element) return;
             				var control = element.winControl;
             				control.navigator = navigator;
             				control.element.mcnPage = true;
@@ -492,7 +572,7 @@
             					if (navigator.global) {
             						WinJS.Navigation.history.backStack = [];
             					} else {
-            						navigator.history.backstack = [];
+            						navigator._history.backstack = [];
             					}
             				}
             				navigator._updateBackButton(element);
@@ -519,19 +599,27 @@
             		var navigator = this;
             		if (this.pageControl && this.pageControl.element) {
             			var navigator = this;
+            			var control = this.pageControl;
+            			var element = control.element;
+
             			//navigator.pageControl.element.opacity = '0';
             			cancelAnimationFrame(navigator.layoutProcess);
             			navigator.layoutProcess = requestAnimationFrame(function () {
             				var vw = appView ? appView.value : null;
-            				if (navigator.pageControl.updateLayout) {
-            					navigator.pageControl.updateLayout.call(navigator.pageControl, navigator.pageElement, vw, navigator._lastViewstate);
+            				if (control.__checkLayout) {
+            					control.__checkLayout(element, vw, navigator._lastViewstate);
             				}
-            				var layoutCtrls = navigator.pageControl.element.querySelectorAll('.mcn-layout-ctrl');
-            				if (layoutCtrls && layoutCtrls.length) {
-            					for (var i = 0 ; i < layoutCtrls.length; i++) {
-            						var ctrl = layoutCtrls[i].winControl;
-            						if (ctrl.updateLayout)
-            							ctrl.updateLayout(ctrl.element, vw, navigator._lastViewstate);
+            				else {
+            					if (control.updateLayout) {
+            						control.updateLayout.call(control, element, vw, navigator._lastViewstate);
+            					}
+            					var layoutCtrls = element.element.querySelectorAll('.mcn-layout-ctrl');
+            					if (layoutCtrls && layoutCtrls.length) {
+            						for (var i = 0 ; i < layoutCtrls.length; i++) {
+            							var ctrl = layoutCtrls[i].winControl;
+            							if (ctrl.updateLayout)
+            								ctrl.updateLayout(ctrl.element, vw, navigator._lastViewstate);
+            						}
             					}
             				}
             				//WinJS.UI.Animation.fadeIn(navigator.pageControl.element);

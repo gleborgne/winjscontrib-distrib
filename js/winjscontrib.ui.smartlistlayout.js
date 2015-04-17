@@ -1,5 +1,5 @@
 /* 
- * WinJS Contrib v2.0.3.0
+ * WinJS Contrib v2.1.0.0
  * licensed under MIT license (see http://opensource.org/licenses/MIT)
  * sources available at https://github.com/gleborgne/winjscontrib
  */
@@ -154,4 +154,13 @@
                 }
             })
     });
+
+    if (WinJSContrib.UI.WebComponents) {
+    	WinJSContrib.UI.WebComponents.register('mcn-smartlistlayout', WinJSContrib.UI.SmartListLayout, function (elt, options) {
+    		WinJSContrib.UI.WebComponents.mapAttr(elt, 'listView', options);
+    		WinJSContrib.UI.WebComponents.mapAttr(elt, 'layouts', options);
+
+    		return options;
+    	});
+    }
 })();

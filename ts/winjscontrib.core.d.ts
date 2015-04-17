@@ -1,398 +1,3 @@
-/// <reference path="../typings/jquery.d.ts" />
-/// <reference path="../typings/winjs.d.ts" />
-/// <reference path="../typings/winrt.d.ts" />
-interface JQuery {
-    tap(func: any): any;
-    untap(): any;
-}
-interface Window {
-    Touch: any;
-}
-declare module WinJSContrib.UI.Pages {
-    /**
-     * List of mixins to apply to each fragment managed by WinJS Contrib (through navigator or by calling explicitely {@link WinJSContrib.UI.Pages.fragmentMixin}).
-     * @field WinJSContrib.UI.Pages.defaultFragmentMixins
-     * @type {Array}
-     */
-    var defaultFragmentMixins: Array<any>;
-    /**
-     * substitute for WinJS.UI.Pages.define that injects custom WinJS Contrib behaviors
-     * @function WinJSContrib.UI.Pages.define
-     */
-    function define(location: any, members: any): (element?: HTMLElement, options?: any, complete?: (page: any) => void, parentedPromise?: WinJS.Promise<any>) => void;
-    /**
-     * Inject WinJSContrib fragment enhancements, such as "$","q", "qAll" functions for scoped selectors, eventTracker and promises properties
-     * This enhancement also allows you to add behavior on each WinJS fragment by adding them to {@link WinJSContrib.UI.Pages.defaultFragmentMixins}
-     * WinJS Contrib navigator is calling this method before processing the page, so you don't need to explicitely wrap all your pages if you use it
-     * @function WinJSContrib.UI.Pages.fragmentMixin
-     * @param {function} constructor constructor for the fragment
-     * @returns {function} constructor for the fragment
-     * @example
-     * {@lang javascript}
-     * WinJSContrib.UI.Pages.fragmentMixin(WinJS.UI.Pages.define("./demos/home.html", {
-     *     ready : function(){
-     *         //your page ready stuff
-     *     }
-     * }));
-     */
-    function fragmentMixin(constructor: any): any;
-    /**
-     * render a html fragment with winjs contrib pipeline and properties, and add WinJS Contrib page events.
-     * @function WinJSContrib.UI.Pages.renderFragment
-     * @param {HTMLElement} container element that will contain the fragment
-     * @param {string} location url for the fragment
-     * @param {Object} args arguments to the fragment
-     * @param {Object} options rendering options
-     */
-    function renderFragment(container: any, location: any, args: any, options: any): WinJS.Promise<{}>;
-}
-declare module WinJSContrib.UI {
-    interface WinJSContribApplication {
-        navigator?: any;
-    }
-    var Application: WinJSContribApplication;
-    /**
-     * indicate if fragment should not look for resources when building control
-     * @field WinJSContrib.UI.disableAutoResources
-     * @type {boolean}
-     */
-    var disableAutoResources: boolean;
-    /**
-     * Calculate offset of element relative to parent element. If parent parameter is null, offset is relative to document
-     * @function WinJSContrib.UI.offsetFrom
-     * @param {HTMLElement} element element to evaluate
-     * @param {HTMLElement} parent reference of offset
-     */
-    function offsetFrom(element: HTMLElement, parent: HTMLElement): {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
-    class EventTracker {
-        events: Array<any>;
-        /**
-         * @class WinJSContrib.UI.EventTracker
-         * @classdesc object to register and release events from addEventListener or bind
-         */
-        constructor();
-        /**
-         * register an event from an object
-         * @function WinJSContrib.UI.EventTracker.prototype.addEvent
-         * @param {Object} e object containing addEventListener
-         * @param {string} eventName name of the event
-         * @param {function} handler
-         * @param {boolean} capture
-         * @returns {function} function to call for unregistering the event
-         */
-        addEvent(e: any, eventName: string, handler: any, capture: boolean): () => void;
-        /**
-         * register binding event
-         * @function WinJSContrib.UI.EventTracker.prototype.addBinding
-         * @param {Object} e object containing bind method
-         * @param {string} eventName name of the binding event
-         * @param {function} handler
-         */
-        addBinding(e: any, eventName: string, handler: any): () => void;
-        /**
-         * release all registered events
-         * @function WinJSContrib.UI.EventTracker.prototype.dispose
-         */
-        dispose(): void;
-    }
-    /**
-     * open all appbars
-     * @function WinJSContrib.UI.appbarsOpen
-     */
-    function appbarsOpen(): void;
-    /**
-     * close all appbars
-     * @function WinJSContrib.UI.appbarsClose
-     */
-    function appbarsClose(): void;
-    /**
-     * disable all appbars
-     * @function WinJSContrib.UI.appbarsDisable
-     */
-    function appbarsDisable(): void;
-    /**
-     * enable all appbars
-     * @function WinJSContrib.UI.appbarsEnable
-     */
-    function appbarsEnable(): void;
-    /**
-     * build a promise around element "load" event (work for all element with src property like images, iframes, ...)
-     * @function WinJSContrib.UI.elementLoaded
-     * @param {HTMLElement} element
-     * @param {string} url url used to feed "src" on element
-     * @returns {WinJS.Promise}
-     */
-    function elementLoaded(elt: any, url: any): WinJS.Promise<{}>;
-    /**
-     * Create a promise for getting an image object from url
-     * @function WinJSContrib.UI.loadImage
-     * @param {string} imgUrl url for the picture
-     * @returns {WinJS.Promise}
-     */
-    function loadImage(imgUrl: any): WinJS.Promise<{}>;
-    /**
-     * List all elements found after provided element
-     * @function WinJSContrib.UI.listElementsAfterMe
-     * @param {HTMLElement} elt target element
-     * @returns {Array} list of sibling elements
-     */
-    function listElementsAfterMe(elt: any): any[];
-    /**
-     * create an animation for removing an element from a list
-     * @function WinJSContrib.UI.removeElementAnimation
-     * @param {HTMLElement} element that will be removed
-     * @returns {WinJS.Promise}
-     */
-    function removeElementAnimation(elt: any): WinJS.Promise<{}>;
-    /**
-     * setup declarative binding to parent control function. It looks for "data-page-action" attributes,
-     * and try to find a matching method on the supplyed control.
-     * You could add arguments with a "page-action-args" attribute. The argument can be an object or a function
-     * @function WinJSContrib.UI.bindPageActions
-     * @param {HTMLElement} element root node crawled for page actions
-     * @param {Object} control control owning functions to call
-     */
-    function bindPageActions(element: any, control: any): void;
-    /**
-     * setup declarative binding to page link. It looks for "data-page-link" attributes.
-     * If any the content of the attribute point toward a page. clicking that element will navigate to that page.
-     * You could add arguments with a "page-action-args" attribute. The argument can be an object or a function
-     * @function WinJSContrib.UI.bindPageLinks
-     * @param {HTMLElement} element root node crawled for page actions
-     */
-    function bindPageLinks(element: any): void;
-    function parentNavigator(element: any): any;
-    /**
-     * Add this element or control as member to the control. It looks for "data-page-member" attributes. If attribute is empty, it tooks the element id as member name.
-     * @function WinJSContrib.UI.bindMembers
-     * @param {HTMLElement} element root node crawled for page actions
-     * @param {Object} control control owning functions to call
-     */
-    function bindMembers(element: any, control: any): void;
-    /**
-     * setup declarative binding to parent control function and to navigation links. It internally invoke both {@link WinJSContrib.UI.bindPageActions} and {@link WinJSContrib.UI.bindPageLinks}
-     * @function WinJSContrib.UI.bindActions
-     * @param {HTMLElement} element root node crawled for page actions
-     * @param {Object} control control owning functions to call
-     */
-    function bindActions(element: any, control: any): void;
-    /**
-     * Trigger events on media queries. This class is usefull as a component for other controls to change some properties based on media queries
-     * @class WinJSContrib.UI.MediaTrigger
-     * @param {Object} items object containing one property for each query
-     * @param {Object} linkedControl control linked to media trigger
-     */
-    class MediaTrigger {
-        queries: Array<any>;
-        linkedControl: any;
-        constructor(items: any, linkedControl: any);
-        /**
-         * @function WinJSContrib.UI.MediaTrigger.prototype.dispose
-         * release media trigger
-         */
-        dispose(): void;
-        /**
-         * register an event from a media query
-         * @function WinJSContrib.UI.MediaTrigger.prototype.registerMediaEvent
-         * @param {string} name event name
-         * @param {string} query media query
-         * @param {Object} data data associated with this query
-         */
-        registerMediaEvent(name: any, query: any, data: any): void;
-        _mediaEvent(arg: any, query: any): void;
-        /**
-         * @function WinJSContrib.UI.MediaTrigger.prototype.check
-         * Check all registered queries
-         */
-        check(): void;
-        /**
-         * Adds an event listener to the control.
-         * @function WinJSContrib.UI.MediaTrigger.prototype.addEventListener
-         * @param type The type (name) of the event.
-         * @param listener The listener to invoke when the event gets raised.
-         * @param useCapture If true, initiates capture, otherwise false.
-        **/
-        addEventListener(type: string, listener: Function, useCapture?: boolean): void;
-        /**
-         * Raises an event of the specified type and with the specified additional properties.
-         * @function WinJSContrib.UI.MediaTrigger.prototype.dispatchEvent
-         * @param type The type (name) of the event.
-         * @param eventProperties The set of additional properties to be attached to the event object when the event is raised.
-         * @returns true if preventDefault was called on the event.
-        **/
-        dispatchEvent(type: string, eventProperties: any): boolean;
-        /**
-         * Removes an event listener from the control.
-         * @function WinJSContrib.UI.MediaTrigger.prototype.removeEventListener
-         * @param type The type (name) of the event.
-         * @param listener The listener to remove.
-         * @param useCapture true if capture is to be initiated, otherwise false.
-        **/
-        removeEventListener(type: string, listener: Function, useCapture?: boolean): void;
-    }
-    /**
-     * register navigation related events like hardware backbuttons. This method keeps track of previously registered navigation handlers
-     *  and disable them until the latests is closed, enablinh multi-level navigation.
-     * @function WinJSContrib.UI.registerNavigationEvents
-     * @param {Object} control control taking ownership of navigation handlers
-     * @param {function} callback callback to invoke when "back" is requested
-     * @returns {function} function to call for releasing navigation handlers
-     */
-    function registerNavigationEvents(control: any, callback: any): () => void;
-    /**
-     * remove tap behavior
-     * @function WinJSContrib.UI.untap
-     * @param {HtmlElement} element element to clean
-     */
-    function untap(element: any): void;
-    /**
-     * remove tap behavior from all childs
-     * @function WinJSContrib.UI.untapAll
-     * @param {HtmlElement} element element to clean
-     */
-    function untapAll(element: any): void;
-    /**
-     * add tap behavior to an element, tap manages quirks like click delay, visual feedback, etc
-     * @function WinJSContrib.UI.tap
-     * @param {HtmlElement} element element to make "tappable"
-     * @param {function} callback callback function invoked on tap
-     * @param {Object} options tap options
-     */
-    function tap(element: any, callback: any, options?: any): void;
-    /**
-     * return a promise completed after css transition on the element is ended
-     * @function WinJSContrib.UI.afterTransition
-     * @param {HtmlElement} element element to watch
-     * @param {number} timeout timeout
-     */
-    function afterTransition(element: any, timeout?: any): WinJS.Promise<{}>;
-    /**
-     * Utility class for building DOM elements through code with a fluent API
-     * @class WinJSContrib.UI.FluentDOM
-     * @param {string} nodeType type of DOM node (ex: 'DIV')
-     * @param className css classes
-     * @param parentElt parent DOM element
-     * @param {WinJSContrib.UI.FluentDOM} parent parent FluentDOM
-     * @example
-     * {@lang javascript}
-     * var elt = new WinJSContrib.UI.FluentDOM('DIV', 'item-content').text(item.title).display('none').element;
-     */
-    class FluentDOM {
-        element: HTMLElement;
-        childs: Array<FluentDOM>;
-        parent: FluentDOM;
-        constructor(nodeType: string, className?: string, parentElt?: Element, parent?: FluentDOM);
-        control: any;
-        /**
-         * Add a css class
-         * @function WinJSContrib.UI.FluentDOM.prototype.addClass
-         * @param classname css class
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        addClass(classname: string): FluentDOM;
-        /**
-         * set className
-         * @function WinJSContrib.UI.FluentDOM.prototype.className
-         * @param classname css classes
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        className(classname: string): FluentDOM;
-        /**
-         * set opacity
-         * @function WinJSContrib.UI.FluentDOM.prototype.opacity
-         * @param opacity opacity
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        opacity(opacity: string): FluentDOM;
-        /**
-         * set display
-         * @function WinJSContrib.UI.FluentDOM.prototype.display
-         * @param display display
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        display(display: string): FluentDOM;
-        /**
-         * set display 'none'
-         * @function WinJSContrib.UI.FluentDOM.prototype.hide
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        hide(): FluentDOM;
-        /**
-         * set visibility
-         * @function WinJSContrib.UI.FluentDOM.prototype.visibility
-         * @param visibility visibility
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        visibility(visibility: string): FluentDOM;
-        /**
-         * set innerText
-         * @function WinJSContrib.UI.FluentDOM.prototype.text
-         * @param text text
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        text(text: string): FluentDOM;
-        /**
-         * set innerHTML
-         * @function WinJSContrib.UI.FluentDOM.prototype.html
-         * @param text text
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        html(text: string): FluentDOM;
-        /**
-         * set attribute
-         * @function WinJSContrib.UI.FluentDOM.prototype.attr
-         * @param name attribute name
-         * @param val attribute value
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        attr(name: string, val: string): FluentDOM;
-        /**
-         * set style property
-         * @function WinJSContrib.UI.FluentDOM.prototype.style
-         * @param name attribute name
-         * @param val attribute value
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        style(name: string, val: string): FluentDOM;
-        /**
-         * append element to another DOM element
-         * @function WinJSContrib.UI.FluentDOM.prototype.appendTo
-         * @param elt parent element
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        appendTo(elt: Element): FluentDOM;
-        /**
-         * add tap behavior
-         * @function WinJSContrib.UI.FluentDOM.prototype.tap
-         * @param callback tap callback
-         * @param options tap options
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        tap(callback: any, options?: any): FluentDOM;
-        /**
-         * create a child FluentDOM and append it to current
-         * @function WinJSContrib.UI.FluentDOM.prototype.append
-         * @param nodeType child node type
-         * @param className css classes
-         * @param callback callback receiving the new FluentDOM as an argument
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        append(nodeType: string, className?: string, callback?: (FluentDOM) => void): FluentDOM;
-        /**
-         * create a WinJS control
-         * @function WinJSContrib.UI.FluentDOM.prototype.ctrl
-         * @param ctrl constructor or full name of the control
-         * @param options control options
-         * @returns {WinJSContrib.UI.FluentDOM}
-         */
-        ctrl(ctrl: any, options?: any): FluentDOM;
-    }
-}
 interface Object {
     map(obj: any, mapping: any): any;
 }
@@ -402,6 +7,9 @@ interface String {
     padLeft(length: any, leadingChar: any): any;
     startsWith(e: any): any;
     endsWith(e: any): any;
+}
+declare module WinJS.UI {
+    var optionsParser: any;
 }
 declare module WinJSContrib.Promise {
     /**
@@ -635,6 +243,16 @@ declare module WinJSContrib.Utils {
      */
     function resolveMethod(element: any, text: any): any;
     function readValue(element: any, text: any): any;
+    var ValueParsers: {
+        "navpage": (element: any, text: any) => any;
+        "page": (element: any, text: any) => any;
+        "ctrl": (element: any, text: any) => any;
+        "select": (element: any, text: any) => any;
+        "obj": (element: any, text: any) => any;
+        "prom": (element: any, text: any) => any;
+        "list": (element: any, text: any) => any;
+        "global": (element: any, text: any) => any;
+    };
     /**
      * resolve value from an expression. This helper will crawl the DOM up, and provide the property or function from parent page or control.
      * @function WinJSContrib.Utils.resolveValue
@@ -697,4 +315,382 @@ declare module WinJSContrib.Templates {
      * @returns {function} rendering function that takes an item promise, and return a DOM element
      */
     function makeInteractive(template: any, args: any): (itemPromise: any) => any;
+}
+
+interface Window {
+    Touch: any;
+}
+declare module WinJSContrib.UI {
+    interface WinJSContribApplication {
+        navigator?: any;
+    }
+    var Application: WinJSContribApplication;
+    /**
+     * indicate if fragment should not look for resources when building control
+     * @field WinJSContrib.UI.disableAutoResources
+     * @type {boolean}
+     */
+    var disableAutoResources: boolean;
+    /**
+     * Calculate offset of element relative to parent element. If parent parameter is null, offset is relative to document
+     * @function WinJSContrib.UI.offsetFrom
+     * @param {HTMLElement} element element to evaluate
+     * @param {HTMLElement} parent reference of offset
+     */
+    function offsetFrom(element: HTMLElement, parent: HTMLElement): {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    };
+    class EventTracker {
+        events: Array<any>;
+        /**
+         * @class WinJSContrib.UI.EventTracker
+         * @classdesc object to register and release events from addEventListener or bind
+         */
+        constructor();
+        /**
+         * register an event from an object
+         * @function WinJSContrib.UI.EventTracker.prototype.addEvent
+         * @param {Object} e object containing addEventListener
+         * @param {string} eventName name of the event
+         * @param {function} handler
+         * @param {boolean} capture
+         * @returns {function} function to call for unregistering the event
+         */
+        addEvent(e: any, eventName: string, handler: any, capture: boolean): () => void;
+        /**
+         * register binding event
+         * @function WinJSContrib.UI.EventTracker.prototype.addBinding
+         * @param {Object} e object containing bind method
+         * @param {string} eventName name of the binding event
+         * @param {function} handler
+         */
+        addBinding(e: any, eventName: string, handler: any): () => void;
+        /**
+         * release all registered events
+         * @function WinJSContrib.UI.EventTracker.prototype.dispose
+         */
+        dispose(): void;
+    }
+    /**
+     * open all appbars
+     * @function WinJSContrib.UI.appbarsOpen
+     */
+    function appbarsOpen(): void;
+    /**
+     * close all appbars
+     * @function WinJSContrib.UI.appbarsClose
+     */
+    function appbarsClose(): void;
+    /**
+     * disable all appbars
+     * @function WinJSContrib.UI.appbarsDisable
+     */
+    function appbarsDisable(): void;
+    /**
+     * enable all appbars
+     * @function WinJSContrib.UI.appbarsEnable
+     */
+    function appbarsEnable(): void;
+    /**
+     * build a promise around element "load" event (work for all element with src property like images, iframes, ...)
+     * @function WinJSContrib.UI.elementLoaded
+     * @param {HTMLElement} element
+     * @param {string} url url used to feed "src" on element
+     * @returns {WinJS.Promise}
+     */
+    function elementLoaded(elt: any, url: any): WinJS.Promise<{}>;
+    /**
+     * Create a promise for getting an image object from url
+     * @function WinJSContrib.UI.loadImage
+     * @param {string} imgUrl url for the picture
+     * @returns {WinJS.Promise}
+     */
+    function loadImage(imgUrl: any): WinJS.Promise<{}>;
+    /**
+     * List all elements found after provided element
+     * @function WinJSContrib.UI.listElementsAfterMe
+     * @param {HTMLElement} elt target element
+     * @returns {Array} list of sibling elements
+     */
+    function listElementsAfterMe(elt: any): any[];
+    /**
+     * create an animation for removing an element from a list
+     * @function WinJSContrib.UI.removeElementAnimation
+     * @param {HTMLElement} element that will be removed
+     * @returns {WinJS.Promise}
+     */
+    function removeElementAnimation(elt: any): WinJS.Promise<{}>;
+    /**
+     * setup declarative binding to parent control function. It looks for "data-page-action" attributes,
+     * and try to find a matching method on the supplyed control.
+     * You could add arguments with a "page-action-args" attribute. The argument can be an object or a function
+     * @function WinJSContrib.UI.bindPageActions
+     * @param {HTMLElement} element root node crawled for page actions
+     * @param {Object} control control owning functions to call
+     */
+    function bindPageActions(element: any, control: any): void;
+    /**
+     * setup declarative binding to page link. It looks for "data-page-link" attributes.
+     * If any the content of the attribute point toward a page. clicking that element will navigate to that page.
+     * You could add arguments with a "page-action-args" attribute. The argument can be an object or a function
+     * @function WinJSContrib.UI.bindPageLinks
+     * @param {HTMLElement} element root node crawled for page actions
+     */
+    function bindPageLinks(element: any): void;
+    function parentNavigator(element: any): any;
+    /**
+     * Add this element or control as member to the control. It looks for "data-page-member" attributes. If attribute is empty, it tooks the element id as member name.
+     * @function WinJSContrib.UI.bindMembers
+     * @param {HTMLElement} element root node crawled for page actions
+     * @param {Object} control control owning functions to call
+     */
+    function bindMembers(element: any, control: any): void;
+    /**
+     * setup declarative binding to parent control function and to navigation links. It internally invoke both {@link WinJSContrib.UI.bindPageActions} and {@link WinJSContrib.UI.bindPageLinks}
+     * @function WinJSContrib.UI.bindActions
+     * @param {HTMLElement} element root node crawled for page actions
+     * @param {Object} control control owning functions to call
+     */
+    function bindActions(element: any, control: any): void;
+    /**
+     * Trigger events on media queries. This class is usefull as a component for other controls to change some properties based on media queries
+     * @class WinJSContrib.UI.MediaTrigger
+     * @param {Object} items object containing one property for each query
+     * @param {Object} linkedControl control linked to media trigger
+     */
+    class MediaTrigger {
+        queries: Array<any>;
+        linkedControl: any;
+        constructor(items: any, linkedControl: any);
+        /**
+         * @function WinJSContrib.UI.MediaTrigger.prototype.dispose
+         * release media trigger
+         */
+        dispose(): void;
+        /**
+         * register an event from a media query
+         * @function WinJSContrib.UI.MediaTrigger.prototype.registerMediaEvent
+         * @param {string} name event name
+         * @param {string} query media query
+         * @param {Object} data data associated with this query
+         */
+        registerMediaEvent(name: any, query: any, data: any): void;
+        _mediaEvent(arg: any, query: any): void;
+        /**
+         * @function WinJSContrib.UI.MediaTrigger.prototype.check
+         * Check all registered queries
+         */
+        check(): void;
+        /**
+         * Adds an event listener to the control.
+         * @function WinJSContrib.UI.MediaTrigger.prototype.addEventListener
+         * @param type The type (name) of the event.
+         * @param listener The listener to invoke when the event gets raised.
+         * @param useCapture If true, initiates capture, otherwise false.
+        **/
+        addEventListener(type: string, listener: Function, useCapture?: boolean): void;
+        /**
+         * Raises an event of the specified type and with the specified additional properties.
+         * @function WinJSContrib.UI.MediaTrigger.prototype.dispatchEvent
+         * @param type The type (name) of the event.
+         * @param eventProperties The set of additional properties to be attached to the event object when the event is raised.
+         * @returns true if preventDefault was called on the event.
+        **/
+        dispatchEvent(type: string, eventProperties: any): boolean;
+        /**
+         * Removes an event listener from the control.
+         * @function WinJSContrib.UI.MediaTrigger.prototype.removeEventListener
+         * @param type The type (name) of the event.
+         * @param listener The listener to remove.
+         * @param useCapture true if capture is to be initiated, otherwise false.
+        **/
+        removeEventListener(type: string, listener: Function, useCapture?: boolean): void;
+    }
+    function registerNavigationEvents(control: any, callback: any): () => void;
+    /**
+     * remove tap behavior
+     * @function WinJSContrib.UI.untap
+     * @param {HtmlElement} element element to clean
+     */
+    function untap(element: any): void;
+    /**
+     * remove tap behavior from all childs
+     * @function WinJSContrib.UI.untapAll
+     * @param {HtmlElement} element element to clean
+     */
+    function untapAll(element: any): void;
+    /**
+     * add tap behavior to an element, tap manages quirks like click delay, visual feedback, etc
+     * @function WinJSContrib.UI.tap
+     * @param {HtmlElement} element element to make "tappable"
+     * @param {function} callback callback function invoked on tap
+     * @param {Object} options tap options
+     */
+    function tap(element: any, callback: any, options?: any): void;
+    /**
+     * return a promise completed after css transition on the element is ended
+     * @function WinJSContrib.UI.afterTransition
+     * @param {HtmlElement} element element to watch
+     * @param {number} timeout timeout
+     */
+    function afterTransition(element: any, timeout?: any): WinJS.Promise<{}>;
+    /**
+     * Utility class for building DOM elements through code with a fluent API
+     * @class WinJSContrib.UI.FluentDOM
+     * @param {string} nodeType type of DOM node (ex: 'DIV')
+     * @param className css classes
+     * @param parentElt parent DOM element
+     * @param {WinJSContrib.UI.FluentDOM} parent parent FluentDOM
+     * @example
+     * {@lang javascript}
+     * var elt = new WinJSContrib.UI.FluentDOM('DIV', 'item-content').text(item.title).display('none').element;
+     */
+    class FluentDOM {
+        element: HTMLElement;
+        childs: Array<FluentDOM>;
+        parent: FluentDOM;
+        constructor(nodeType: string, className?: string, parentElt?: Element, parent?: FluentDOM);
+        control: any;
+        /**
+         * Add a css class
+         * @function WinJSContrib.UI.FluentDOM.prototype.addClass
+         * @param classname css class
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        addClass(classname: string): FluentDOM;
+        /**
+         * set className
+         * @function WinJSContrib.UI.FluentDOM.prototype.className
+         * @param classname css classes
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        className(classname: string): FluentDOM;
+        /**
+         * set opacity
+         * @function WinJSContrib.UI.FluentDOM.prototype.opacity
+         * @param opacity opacity
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        opacity(opacity: string): FluentDOM;
+        /**
+         * set display
+         * @function WinJSContrib.UI.FluentDOM.prototype.display
+         * @param display display
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        display(display: string): FluentDOM;
+        /**
+         * set display 'none'
+         * @function WinJSContrib.UI.FluentDOM.prototype.hide
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        hide(): FluentDOM;
+        /**
+         * set visibility
+         * @function WinJSContrib.UI.FluentDOM.prototype.visibility
+         * @param visibility visibility
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        visibility(visibility: string): FluentDOM;
+        /**
+         * set innerText
+         * @function WinJSContrib.UI.FluentDOM.prototype.text
+         * @param text text
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        text(text: string): FluentDOM;
+        /**
+         * set innerHTML
+         * @function WinJSContrib.UI.FluentDOM.prototype.html
+         * @param text text
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        html(text: string): FluentDOM;
+        /**
+         * set attribute
+         * @function WinJSContrib.UI.FluentDOM.prototype.attr
+         * @param name attribute name
+         * @param val attribute value
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        attr(name: string, val: string): FluentDOM;
+        /**
+         * set style property
+         * @function WinJSContrib.UI.FluentDOM.prototype.style
+         * @param name attribute name
+         * @param val attribute value
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        style(name: string, val: string): FluentDOM;
+        /**
+         * append element to another DOM element
+         * @function WinJSContrib.UI.FluentDOM.prototype.appendTo
+         * @param elt parent element
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        appendTo(elt: Element): FluentDOM;
+        /**
+         * add tap behavior
+         * @function WinJSContrib.UI.FluentDOM.prototype.tap
+         * @param callback tap callback
+         * @param options tap options
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        tap(callback: any, options?: any): FluentDOM;
+        /**
+         * create a child FluentDOM and append it to current
+         * @function WinJSContrib.UI.FluentDOM.prototype.append
+         * @param nodeType child node type
+         * @param className css classes
+         * @param callback callback receiving the new FluentDOM as an argument
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        append(nodeType: string, className?: string, callback?: (FluentDOM) => void): FluentDOM;
+        /**
+         * create a WinJS control
+         * @function WinJSContrib.UI.FluentDOM.prototype.ctrl
+         * @param ctrl constructor or full name of the control
+         * @param options control options
+         * @returns {WinJSContrib.UI.FluentDOM}
+         */
+        ctrl(ctrl: any, options?: any): FluentDOM;
+    }
+}
+
+declare var __global: any;
+declare module WinJSContrib.UI.WebComponents {
+    var watch: any;
+}
+declare var profiler: any;
+declare module WinJSContrib.UI.Pages {
+    /**
+     * List of mixins to apply to each fragment managed by WinJS Contrib (through navigator or by calling explicitely {@link WinJSContrib.UI.Pages.fragmentMixin}).
+     * @field WinJSContrib.UI.Pages.defaultFragmentMixins
+     * @type {Array}
+     */
+    var defaultFragmentMixins: Array<any>;
+    /**
+     * render a html fragment with winjs contrib pipeline and properties, and add WinJS Contrib page events.
+     * @function WinJSContrib.UI.Pages.renderFragment
+     * @param {HTMLElement} container element that will contain the fragment
+     * @param {string} location url for the fragment
+     * @param {Object} args arguments to the fragment
+     * @param {Object} options rendering options
+     */
+    function renderFragment(container: any, location: any, args: any, options: any): WinJS.Promise<{}>;
+    class PageLifeCycleStep {
+        promise: WinJS.Promise<any>;
+        isDone: boolean;
+        stepName: string;
+        _resolvePromise: any;
+        _rejectPromise: any;
+        queue: Array<any>;
+        constructor(page: any, stepName: any, parent: any);
+        attach(callback: any): WinJS.Promise<any>;
+        resolve(arg: any): WinJS.IPromise<any>;
+        reject(arg: any): WinJS.IPromise<WinJS.Promise<any>>;
+    }
 }
