@@ -2246,7 +2246,7 @@ var WinJSContrib;
                 'use strict';
                 if (!_Global.document || !_CorePages)
                     return;
-                var viewMap = _CorePages._viewMap || {};
+                var viewMap = _CorePages._viewMap || _CorePages.viewMap || {};
                 //this property allows defining mixins applyed to all pages
                 function abs(uri) {
                     var a = _Global.document.createElement("a");
@@ -2352,25 +2352,21 @@ var WinJSContrib;
                     }
                     return base;
                 }
-                function mergeJavaScriptClass(targetCtor, sourcePrototype) {
-                    if (sourcePrototype) {
-                        if (!sourcePrototype.__proto__.hasOwnProperty('hasOwnProperty')) {
-                            //if prototype is not "object" we start by merging it's parent members
-                            //by merging from parent to child we ensure that inheritance chain is respected
-                            mergeJavaScriptClass(targetCtor, sourcePrototype.__proto__);
+                function mergeJavaScriptClass(baseCtor, classDef) {
+                    var keys = Object.keys(baseCtor.prototype);
+                    keys.forEach(function (k) {
+                        if (classDef.prototype[k] === undefined) {
+                            classDef.prototype[k] = baseCtor.prototype[k];
                         }
-                        return injectMixin(targetCtor, sourcePrototype);
-                    }
-                    return targetCtor;
+                    });
+                    return baseCtor;
                 }
                 function addMembers(ctor, members) {
                     if (!members)
                         return ctor;
                     if (typeof members == 'function') {
-                        if (!ctor.prototype._attachedConstructors)
-                            ctor.prototype._attachedConstructors = [];
-                        ctor.prototype._attachedConstructors.push(members);
-                        return mergeJavaScriptClass(ctor, members.prototype);
+                        ctor.prototype._attachedConstructor = members;
+                        return mergeJavaScriptClass(ctor, members);
                     }
                     else if (typeof members == 'object') {
                         return injectMixin(ctor, members);
@@ -2388,14 +2384,23 @@ var WinJSContrib;
                     }
                     var load = Promise.timeout().then(function Pages_load() {
                         return that.load(uri);
+                    }).then(function (loadResult) {
+                        //if page is defined by Js classes, call class constructors 
+                        if (that._attachedConstructor) {
+                            var realControl = new that._attachedConstructor(element, options);
+                            element.winControl = realControl;
+                            var keys = Object.keys(that);
+                            keys.forEach(function (k) {
+                                realControl[k] = that[k];
+                            });
+                            realControl.pageLifeCycle.page = realControl;
+                            that.pageControl = realControl;
+                            that.dismissed = true;
+                            that = realControl;
+                        }
+                        return loadResult;
                     });
                     var renderCalled = load.then(function Pages_init(loadResult) {
-                        //if page is defined by Js classes, call class constructors 
-                        if (that._attachedConstructors) {
-                            that._attachedConstructors.forEach(function (ct) {
-                                ct.apply(that, [element, options]);
-                            });
-                        }
                         return Promise.join({
                             loadResult: loadResult,
                             initResult: that.init(element, options)
@@ -2453,7 +2458,7 @@ var WinJSContrib;
                         that.ready(element, options);
                         that.pageLifeCycle.ended = new Date();
                         that.pageLifeCycle.delta = that.pageLifeCycle.ended - that.pageLifeCycle.created;
-                        console.log('navigation to ' + uri + ' took ' + that.pageLifeCycle.delta + 'ms');
+                        //console.log('navigation to ' + uri + ' took ' + that.pageLifeCycle.delta + 'ms');
                         broadcast(that, element, 'pageReady', [element, options]);
                     }).then(function (result) {
                         return that.pageLifeCycle.steps.ready.resolve();
@@ -2579,6 +2584,9 @@ var WinJSContrib;
                             render(abs(uri), _Global.document.body);
                         }, true);
                     }
+                    //in case we are on WinJS<4 we reference members on WinJS Core Pages
+                    if (!_CorePages.viewMap && !_CorePages._viewMap && typeof members !== 'function')
+                        _Pages._corePages.define(uri, members);
                     return ctor;
                 }
                 function render(uri, element, options, parentedPromise) {
@@ -2607,7 +2615,7 @@ var WinJSContrib;
                     render: _CorePages.render,
                     define: _CorePages.define,
                     _remove: _CorePages._remove,
-                    _viewMap: _CorePages._viewMap,
+                    _viewMap: viewMap,
                 };
                 var pageOverride = {
                     define: Pages_define,
