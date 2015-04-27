@@ -315,6 +315,8 @@ var WinJSContrib;
         //set object property value based on property name. Property name is a string containing the name of the property, 
         //or the name of the property with an indexer, ex: myproperty[2] (to get item in a array)
         function setobject(obj, prop, data) {
+            if (!obj)
+                return;
             if (WinJSContrib.Utils.hasValue(prop)) {
                 if (obj.setProperty) {
                     obj.setProperty(prop, data);
@@ -757,50 +759,113 @@ var WinJSContrib;
             return undefined;
         }
         Utils.readValue = readValue;
+        /**
+         * Utility functions used by WinJSContrib.Utils.resolveValue and WinJSContrib.Utils.applyValue
+         * @namespace WinJSContrib.Utils.ValueParsers
+         */
         Utils.ValueParsers = {
-            "navpage": function (element, text) {
-                var control = null;
-                if (WinJSContrib.Utils.getParentPage) {
-                    control = WinJSContrib.Utils.getParentPage(element);
-                }
-                if (!control && WinJSContrib.UI.Application.navigator) {
-                    control = WinJSContrib.UI.Application.navigator.pageControl;
+            /**
+             * Get value from current page in parent navigator
+             * @function WinJSContrib.Utils.ValueParsers.navpage
+             */
+            "navpage": function (element, text, context) {
+                var control = (context && context.data) ? context.data.navpage : null;
+                if (!control) {
+                    if (WinJSContrib.Utils.getParentPage) {
+                        control = WinJSContrib.Utils.getParentPage(element);
+                        if (context && context.data)
+                            context.data.navpage = control;
+                    }
+                    if (!control && WinJSContrib.UI.Application.navigator) {
+                        control = WinJSContrib.UI.Application.navigator.pageControl;
+                        if (context && context.data)
+                            context.data.navpage = control;
+                    }
                 }
                 if (!control)
                     return;
+                if (context)
+                    context.parentControl = control;
                 var method = WinJSContrib.Utils.readProperty(control, text);
                 if (method && typeof method === 'function')
                     return method.bind(control);
                 else
                     return method;
             },
-            "page": function (element, text) {
-                var control = WinJSContrib.Utils.getParentControlByClass('pagecontrol', element);
+            /**
+             * Get value from parent element with 'pagecontrol' class
+             * @function WinJSContrib.Utils.ValueParsers.page
+             */
+            "page": function (element, text, context) {
+                var control = (context && context.data) ? context.data.page : null;
+                if (!control) {
+                    control = WinJSContrib.Utils.getParentControlByClass('pagecontrol', element);
+                    if (context && context.data)
+                        context.data.page = control;
+                }
+                if (!control)
+                    return;
+                if (context)
+                    context.parentControl = control;
                 var method = WinJSContrib.Utils.readProperty(control, text);
                 if (method && typeof method === 'function')
                     return method.bind(control);
                 else
                     return method;
             },
-            "ctrl": function (element, text) {
-                var control = WinJSContrib.Utils.getScopeControl(element);
+            /**
+             * Get value from parent scope
+             * @function WinJSContrib.Utils.ValueParsers.ctrl
+             */
+            "ctrl": function (element, text, context) {
+                var control = (context && context.data) ? context.data.scope : null;
+                if (!control) {
+                    control = WinJSContrib.Utils.getScopeControl(element);
+                    if (context && context.data)
+                        context.data.scope = control;
+                }
+                if (!control)
+                    return;
+                if (context)
+                    context.parentControl = control;
                 var method = WinJSContrib.Utils.readProperty(control, text);
                 if (method && typeof method === 'function')
                     return method.bind(control);
                 else
                     return method;
             },
-            "select": function (element, text) {
-                var control = WinJSContrib.Utils.getScopeControl(element);
+            /**
+             * select a node from DOM
+             * @function WinJSContrib.Utils.ValueParsers.select
+             */
+            "select": function (element, text, context) {
+                var control = (context && context.data) ? context.data.scope : null;
+                if (!control) {
+                    control = WinJSContrib.Utils.getScopeControl(element);
+                    if (context && context.data)
+                        context.data.scope = control;
+                }
                 var element = null;
+                var items = text.split('|');
+                var selector = items[0];
                 if (control) {
-                    element = control.element.querySelector(text);
+                    element = control.element.querySelector(selector);
                 }
                 if (!element)
-                    element = document.querySelector(text);
-                return element;
+                    element = document.querySelector(selector);
+                if (items.length == 1) {
+                    return element;
+                }
+                else if (items.length > 1) {
+                    var val = readProperty(element, text.substr(items[0].length + 1));
+                    return val;
+                }
             },
-            "obj": function (element, text) {
+            /**
+             * get an object formatted as JSON
+             * @function WinJSContrib.Utils.ValueParsers.obj
+             */
+            "obj": function (element, text, context) {
                 return WinJS.UI.optionsParser(text, window, {
                     select: WinJS.Utilities.markSupportedForProcessing(function (text) {
                         var parent = WinJSContrib.Utils.getScopeControl(element);
@@ -813,26 +878,75 @@ var WinJSContrib;
                     })
                 });
             },
-            "prom": function (element, text) {
-                var res = resolveValue(element, text);
+            /**
+             * mark a promise for resolution (if used in applyValue, the promise will get resolved and the promise's result will be affected)
+             * @function WinJSContrib.Utils.ValueParsers.prom
+             */
+            "prom": function (element, text, context) {
+                var res = resolveValue(element, text, context);
                 if (res.then) {
+                    res = res.then(null, null);
                     res.mcnMustResolve = true;
                 }
                 return res;
             },
-            "list": function (element, text) {
-                var res = resolveValue(element, text);
-                if (res.then) {
-                    var p = res.then(function (data) {
-                        return new WinJS.Binding.List(data).dataSource;
-                    });
-                    p.mcnMustResolve = true;
-                    return p;
+            /**
+             * wrap result in WinJS.Binding.List().dataSource
+             * usefull for ListViews
+             * @function WinJSContrib.Utils.ValueParsers.list
+             */
+            "list": function (element, text, context) {
+                var res = resolveValue(element, text, context);
+                if (res) {
+                    if (res.then) {
+                        var p = res.then(function (data) {
+                            return new WinJS.Binding.List(data).dataSource;
+                        });
+                        p.mcnMustResolve = true;
+                        return p;
+                    }
+                    return new WinJS.Binding.List(res).dataSource;
                 }
-                return new WinJS.Binding.List(res).dataSource;
             },
-            "global": function (element, text) {
+            /**
+             * get value from global scope
+             * @function WinJSContrib.Utils.ValueParsers.global
+             */
+            "global": function (element, text, context) {
                 return WinJSContrib.Utils.readProperty(window, text);
+            },
+            /**
+             * get a template from uri
+             * @function WinJSContrib.Utils.ValueParsers.templ
+             */
+            "templ": function (element, text, context) {
+                return WinJSContrib.Templates.get(text);
+            },
+            /**
+             * return element property
+             * @function WinJSContrib.Utils.ValueParsers.element
+             */
+            "element": function (element, text, context) {
+                var res = resolveValue(element, text, context);
+                if (res)
+                    return res.element;
+            },
+            "event": function (element, text, context) {
+                var res = resolveValue(element, text, context);
+                var parentControl = null;
+                if (!res || !context || !context.name) {
+                    return;
+                }
+                if (context)
+                    parentControl = context.parentControl;
+                if (res && typeof res === 'function') {
+                    if (parentControl && parentControl.eventTracker) {
+                        parentControl.eventTracker.addEvent(context.control, context.name, res);
+                    }
+                    else {
+                        context.control.addEventListener(context.name, res);
+                    }
+                }
             }
         };
         /**
@@ -842,7 +956,7 @@ var WinJSContrib;
          * @param {string} text expression like 'page:something' or 'ctrl:something' or 'something'
          * @returns {Object}
          */
-        function resolveValue(element, text) {
+        function resolveValue(element, text, context) {
             var methodName, control, method;
             var items = text.split(':');
             if (items.length > 1) {
@@ -850,12 +964,32 @@ var WinJSContrib;
                 var val = text.substr(name.length + 1);
                 var parser = Utils.ValueParsers[name];
                 if (parser) {
-                    return parser(element, val);
+                    return parser(element, val, context);
                 }
             }
             return text; //WinJSContrib.Utils.readProperty(window, text);
         }
         Utils.resolveValue = resolveValue;
+        /**
+         * call resolve value and apply result to a target object
+         * @function WinJSContrib.Utils.applyValue
+         * @param {HTMLElement} element DOM element to look
+         * @param {string} text expression like 'page:something' or 'ctrl:something' or 'something'
+         * @param {string} target target object
+         * @param {string} targetPath path to dest property
+         */
+        function applyValue(element, text, target, targetPath, context) {
+            var tmp = WinJSContrib.Utils.resolveValue(element, text, context);
+            if (tmp && tmp.then && tmp.mcnMustResolve) {
+                tmp.then(function (data) {
+                    WinJSContrib.Utils.writeProperty(target, targetPath, data);
+                });
+            }
+            else {
+                WinJSContrib.Utils.writeProperty(target, targetPath, tmp);
+            }
+        }
+        Utils.applyValue = applyValue;
         /**
          * Checks in a safe way if an object has a value, which could be 'false', '0' or '""'
          * @function WinJSContrib.Utils.hasValue
@@ -2127,8 +2261,8 @@ var WinJSContrib;
                         options.oncreate(elementCtrl.element, args);
                     }
                     if (options.oninit) {
-                        elementCtrl.elementReady.then(function () {
-                            options.oninit(elementCtrl.element, args);
+                        elementCtrl.pageLifeCycle.steps.init.attach(function () {
+                            return options.oninit(elementCtrl.element, args);
                         });
                     }
                     if (elementCtrl.enterPageAnimation || options.enterPage) {
@@ -2146,27 +2280,26 @@ var WinJSContrib;
                             else {
                                 elts = page.element;
                             }
-                            //this.dispatchEvent("pageContentReady", navargs);
                             if (elts)
                                 return page._enterAnimation(elts);
                         };
                     }
-                    //        if (options.closeOldPagePromise) {
-                    //elementCtrl.pageLifeCycle.steps.layout.attach(function () {
-                    //                return options.closeOldPagePromise;
-                    //            });
-                    //        }			
-                    elementCtrl.contentReadyComplete = elementCtrl.renderComplete.then(function () {
-                        if (options.onrender)
+                    if (options.onrender) {
+                        elementCtrl.pageLifeCycle.steps.process.attach(function () {
                             options.onrender(elementCtrl.element, args);
-                        if (!WinJSContrib.UI.disableAutoResources)
+                        });
+                    }
+                    if (!WinJSContrib.UI.disableAutoResources) {
+                        elementCtrl.pageLifeCycle.steps.process.attach(function () {
                             return WinJS.Resources.processAll(element);
-                    });
-                    elementCtrl.readyComplete.then(function (control) {
-                        if (options.closeOldPagePromise) {
+                        });
+                    }
+                    if (options.closeOldPagePromise) {
+                        elementCtrl.pageLifeCycle.steps.ready.attach(function () {
                             return options.closeOldPagePromise;
-                        }
-                    }).then(function (control) {
+                        });
+                    }
+                    elementCtrl.pageLifeCycle.steps.ready.attach(function () {
                         if (options.onready)
                             options.onready(elementCtrl.element, args);
                         if (elementCtrl.enterPageAnimation) {
@@ -2175,7 +2308,8 @@ var WinJSContrib;
                         else {
                             elementCtrl.element.style.opacity = '';
                         }
-                    }).then(fragmentCompleted, fragmentError);
+                    });
+                    elementCtrl.pageLifeCycle.steps.ready.promise.then(fragmentCompleted, fragmentError);
                 }
                 var elementCtrl = new pageConstructor(element, args, preparePageControl, parented);
                 return fragmentPromise;
@@ -2187,6 +2321,7 @@ var WinJSContrib;
                     this.queue = [];
                     this.isDone = false;
                     this.stepName = stepName;
+                    //this.created = new Date();
                     this.promise = new WinJS.Promise(function (c, e) {
                         _this._resolvePromise = c;
                         _this._rejectPromise = e;
@@ -2209,10 +2344,16 @@ var WinJSContrib;
                     }
                 };
                 PageLifeCycleStep.prototype.resolve = function (arg) {
-                    var _this = this;
+                    var step = this;
                     this.isDone = true;
-                    var promises = [];
+                    function closeStep() {
+                        //step.resolved = new Date();
+                        step._resolvePromise(arg);
+                        //console.log('resolved ' + step.stepName + '(' + (<any>step.resolved - <any>step.created) + 'ms)');
+                        return step.promise;
+                    }
                     if (this.queue && this.queue.length) {
+                        var promises = [];
                         this.queue.forEach(function (q) {
                             promises.push(new WinJS.Promise(function (c, e) {
                                 try {
@@ -2226,12 +2367,14 @@ var WinJSContrib;
                             }));
                         });
                         this.queue = null;
+                        return WinJS.Promise.join(promises).then(function () {
+                            return closeStep();
+                        }, this.reject.bind(this));
                     }
-                    return WinJS.Promise.join(promises).then(function () {
-                        _this._resolvePromise(arg);
-                        //console.log('resolved ' + this.stepName);
-                        return _this.promise;
-                    }, this.reject.bind(this));
+                    else {
+                        this.queue = null;
+                        return closeStep();
+                    }
                 };
                 PageLifeCycleStep.prototype.reject = function (arg) {
                     this.isDone = true;
@@ -2346,8 +2489,8 @@ var WinJSContrib;
                     //we want to allow this mixins to provide their own addition to "dispose"
                     if (d && mixin.hasOwnProperty('dispose')) {
                         base.prototype.dispose = function () {
-                            d.apply(this);
                             mixin.dispose.apply(this);
+                            d.apply(this);
                         };
                     }
                     return base;
@@ -2530,7 +2673,7 @@ var WinJSContrib;
                                     render: new PageLifeCycleStep(that, 'render', null),
                                     process: new PageLifeCycleStep(that, 'process', parent),
                                     layout: new PageLifeCycleStep(that, 'layout', parent),
-                                    ready: new PageLifeCycleStep(that, 'ready', parent),
+                                    ready: new PageLifeCycleStep(that, 'ready', parent)
                                 },
                                 initialDisplay: null
                             };

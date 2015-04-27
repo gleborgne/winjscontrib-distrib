@@ -49,6 +49,16 @@ body {
   -ms-touch-action: manipulation;
   touch-action: manipulation;
 }
+.toolbar {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+}
+.toolbar > .title,
+.toolbar > .titlearea,
+.toolbar > .main {
+  flex-grow: 1;
+}
 @keyframes pulseanimation {
   0% {
     -webkit-transform: scale(1);
@@ -738,6 +748,7 @@ win-flipview,
 win-flyout,
 win-hub,
 win-hubsection,
-win-listview {
+win-listview,
+mcn-navigator {
   display: block;
 }
